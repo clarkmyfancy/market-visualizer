@@ -1,66 +1,37 @@
-Market Visualizer: Austin Tech & Asset Dashboard
-A high-performance, responsive data visualization platform built to monitor diverse asset classes, including Crypto, Stocks, and Austin Real Estate. This project serves as a technical showcase of modern Angular 18 architecture and D3.js engine integration.
+# 📈 Market Visualizer
 
-🚀 The Problem
-Modern investors and founders (particularly in the Austin scene) often juggle data across fragmented platforms—Robinhood for crypto, Zillow for real estate, and various brokers for stocks. This dashboard centralizes those metrics into a single, high-fidelity interface that feels as smooth on a mobile device as it does on a desktop workstation.
+A high-performance, responsive market data dashboard built with **Angular 18** and **D3.js**. This project visualizes market performance across diverse asset classes using reactive signals and custom D3 charting logic.
 
-✨ Key Features
-Reactive Market Engine: Built with Angular Signals for instantaneous UI updates without the overhead of traditional change detection.
+## 🚀 Live Demo
+**[View the Live Application on Heroku](https://market-visualization-6d9671c91b62.herokuapp.com/)**
 
-Custom D3.js Visualization: Hand-crafted SVG charts optimized for performance and "pixel-perfect" precision.
+---
 
-Mobile-First "Scrubbing": Interactive vertical scrub lines and tooltips optimized for touch-events and thumb-navigation.
+## 🛠️ Tech Stack
+* **Framework:** Angular 18 (Standalone Components, Signals)
+* **Visualization:** D3.js (Responsive SVG line charts)
+* **Styling:** SCSS (Mobile-first, Flexbox/Grid)
+* **Testing:** Jest & Angular Testing Library
+* **Infrastructure:** Node.js (Express) server on Heroku
 
-Data Normalization: A robust TypeScript service layer that translates disparate API schemas into a unified MarketAsset model.
 
-🛠 Tech Stack
-Framework: Angular 18 (Standalone Components, Signals)
 
-Visualization: D3.js v7+
+## 🏗️ Core Features
+* **Reactive State Management:** Leverages Angular Signals for efficient, fine-grained updates without full component re-renders.
+* **Responsive D3 Engine:** Custom-built chart logic that recalculates scales and dimensions on window resize for a seamless cross-device experience.
+* **Enterprise Architecture:** Clean separation of concerns with dedicated Core (Services), Shared (Models), and Feature (UI) modules.
 
-Language: TypeScript (Strict Mode)
+## 💻 Local Development
 
-Styling: SCSS with Modern CSS Variables for "Native-feel" mobile UI
+1. **Clone the repo:** `git clone https://github.com/clarkmyfancy/market-visualizer.git`
 
-Testing: Jest (Unit) & Playwright (E2E)
+2. **Install dependencies:** `npm install`
 
-🏗 Architecture Overview
-The project follows a Senior-level separation of concerns to ensure scalability:
+3. **Run Dev Server:** `npm run dev` (Access via `http://localhost:4200`)
 
-src/app/core/: Centralized services and data-fetching logic.
+4. **Run Unit Tests:** `npm test`
 
-src/app/shared/: Reusable D3 components and strict TypeScript interfaces.
+5. **Build Production:** `npm run build:prod`
 
-src/app/features/: High-level dashboard views and layout orchestration.
-
-🚦 Getting Started
-Prerequisites
-
-Node.js v20 (LTS)
-
-Angular CLI
-
-Installation
-
-Clone the repository:
-
-Bash
-git clone https://github.com/clarkmyfancy/market-visualizer.git
-Install dependencies:
-
-Bash
-npm install
-Launch the development server:
-
-Bash
-ng serve
-View the app at http://localhost:4200.
-
-🗺 Roadmap
-[x] Initial D3 Responsive Container
-
-[ ] Live CoinGecko API Integration
-
-[ ] Austin Real Estate Geographic Heatmap
-
-[ ] Local Storage Persistence for "Pinned" Assets
+---
+*Created by Jack Conrad Clark — Software Engineer in Austin, TX.*

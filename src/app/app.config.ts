@@ -1,8 +1,10 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
-    
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    // We don't have routes defined yet, but this keeps the structure ready for Day 3
+    provideRouter([])
   ]
 };

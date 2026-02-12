@@ -1,0 +1,22 @@
+<main class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Market Visualizer</h1>
+    <p class="subtitle">Multi-Asset Performance Tracker</p>
+  </header>
+
+  <nav class="asset-navigation">
+    @for (asset of assets; track asset.id) {
+      <button
+        class="asset-btn"
+        (click)="selectAsset(asset)"
+        [class.active]="marketService.selectedAsset()?.id === asset.id"
+        [style.--accent-color]="asset.color">
+        {{ asset.name }}
+      </button>
+    }
+  </nav>
+
+  <section class="chart-section">
+    <app-market-chart></app-market-chart>
+  </section>
+</main>

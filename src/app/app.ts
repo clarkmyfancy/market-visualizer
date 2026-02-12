@@ -1,36 +1,40 @@
-import { Component, ElementRef, HostListener, viewChild, AfterViewInit } from '@angular/core';
-import * as d3 from 'd3';
+// import { Component, inject, OnInit } from '@angular/core';
+// import { MarketService } from './core/services/market.service';
+// import { MarketChartComponent } from './components/market-chart/market-chart.component';
+// import { MarketAsset } from './shared/models/market.model';
 
-@Component({
-  selector: 'app-root',
-  standalone: true,
-  template: `
-    <div style="padding: 20px; background: #121212; min-height: 100vh; color: white;">
-      <h1>Market Visualizer</h1>
-      <div #container style="width: 100%; height: 50vh; background: #1a1a1a; border-radius: 12px;"></div>
-    </div>
-  `
-})
-export class App implements AfterViewInit {
-  container = viewChild.required<ElementRef>('container');
+// @Component({
+//   selector: 'app-root',
+//   standalone: true,
+//   imports: [MarketChartComponent],
+//   template: `
+//     <main style="padding: 20px; background: #121212; min-height: 100vh; color: white;">
+//       <h1>Market Visualizer</h1>
 
-  @HostListener('window:resize')
-  onResize() { this.render(); }
+//       <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+//         @for (asset of assets; track asset.id) {
+//           <button (click)="selectAsset(asset)"
+//                   [style.border-color]="asset.color"
+//                   style="padding: 8px 16px; background: #1e1e1e; color: white; cursor: pointer; border: 2px solid transparent; border-radius: 6px;">
+//             {{ asset.name }}
+//           </button>
+//         }
+//       </div>
 
-  ngAfterViewInit() { this.render(); }
+//       <app-market-chart></app-market-chart>
+//     </main>
+//   `
+// })
+// export class AppComponent implements OnInit {
+//   marketService = inject(MarketService);
+//   assets: MarketAsset[] = [];
 
-  render() {
-    const el = this.container().nativeElement;
-    d3.select(el).selectAll('*').remove();
-    const svg = d3.select(el).append('svg')
-      .attr('width', el.offsetWidth)
-      .attr('height', el.offsetHeight);
+//   ngOnInit() {
+//     this.assets = this.marketService.loadAssets();
+//     this.selectAsset(this.assets[0]); // Default to Bitcoin
+//   }
 
-    svg.append('text')
-      .attr('x', el.offsetWidth / 2)
-      .attr('y', el.offsetHeight / 2)
-      .attr('text-anchor', 'middle')
-      .attr('fill', '#00aeef')
-      .text('D3 ACTIVE - RESPONSIVE');
-  }
-}
+//   selectAsset(asset: MarketAsset) {
+//     this.marketService.selectedAsset.set(asset);
+//   }
+// }

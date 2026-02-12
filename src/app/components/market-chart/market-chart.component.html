@@ -1,0 +1,9 @@
+<div class="chart-wrapper">
+  <div class="chart-header">
+    <h2 [style.color]="marketService.selectedAsset()?.color">
+      {{ marketService.selectedAsset()?.name }}
+    </h2>
+  </div>
+
+  <div #chartContainer class="chart-container"></div>
+</div>

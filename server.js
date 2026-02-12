@@ -2,18 +2,16 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// Point to the 'browser' folder inside your dist directory
-// Angular 18+ structure: dist/[project-name]/browser
-const DIST_PATH = path.join(__dirname, 'dist/market-visualizer/browser');
+// Set this exactly to where your index.html lives
+const DIST_PATH = path.join(__dirname, 'dist/market-visualizer');
 
 app.use(express.static(DIST_PATH));
 
 app.get('/*', (req, res) => {
-    res.sendFile(path.join(DIST_PATH, 'index.html'));
+  res.sendFile(path.join(DIST_PATH, 'index.html'));
 });
 
-// Use the port Heroku provides, otherwise default to 8080
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

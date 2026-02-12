@@ -1,60 +1,66 @@
-# MarketVisualizer
+Market Visualizer: Austin Tech & Asset Dashboard
+A high-performance, responsive data visualization platform built to monitor diverse asset classes, including Crypto, Stocks, and Austin Real Estate. This project serves as a technical showcase of modern Angular 18 architecture and D3.js engine integration.
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.4.
+🚀 The Problem
+Modern investors and founders (particularly in the Austin scene) often juggle data across fragmented platforms—Robinhood for crypto, Zillow for real estate, and various brokers for stocks. This dashboard centralizes those metrics into a single, high-fidelity interface that feels as smooth on a mobile device as it does on a desktop workstation.
 
-## Development server
+✨ Key Features
+Reactive Market Engine: Built with Angular Signals for instantaneous UI updates without the overhead of traditional change detection.
 
-To start a local development server, run:
+Custom D3.js Visualization: Hand-crafted SVG charts optimized for performance and "pixel-perfect" precision.
 
-```bash
+Mobile-First "Scrubbing": Interactive vertical scrub lines and tooltips optimized for touch-events and thumb-navigation.
+
+Data Normalization: A robust TypeScript service layer that translates disparate API schemas into a unified MarketAsset model.
+
+🛠 Tech Stack
+Framework: Angular 18 (Standalone Components, Signals)
+
+Visualization: D3.js v7+
+
+Language: TypeScript (Strict Mode)
+
+Styling: SCSS with Modern CSS Variables for "Native-feel" mobile UI
+
+Testing: Jest (Unit) & Playwright (E2E)
+
+🏗 Architecture Overview
+The project follows a Senior-level separation of concerns to ensure scalability:
+
+src/app/core/: Centralized services and data-fetching logic.
+
+src/app/shared/: Reusable D3 components and strict TypeScript interfaces.
+
+src/app/features/: High-level dashboard views and layout orchestration.
+
+🚦 Getting Started
+Prerequisites
+
+Node.js v20 (LTS)
+
+Angular CLI
+
+Installation
+
+Clone the repository:
+
+Bash
+git clone https://github.com/clarkmyfancy/market-visualizer.git
+Install dependencies:
+
+Bash
+npm install
+Launch the development server:
+
+Bash
 ng serve
-```
+View the app at http://localhost:4200.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+🗺 Roadmap
+[x] Initial D3 Responsive Container
 
-## Code scaffolding
+[ ] Live CoinGecko API Integration
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+[ ] Austin Real Estate Geographic Heatmap
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-# market-visualizer
+[ ] Local Storage Persistence for "Pinned" Assets

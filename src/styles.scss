@@ -1,1 +1,71 @@
 /* You can add global styles to this file, and also import other style files */
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Retro System 7-ish theme tokens */
+:root {
+  --bg: #e9e9e9;          /* matte gray */
+  --panel: #f3f3f3;       /* slightly lighter */
+  --border-dark: #7b7b7b; /* bottom/right */
+  --border-mid: #b5b5b5;
+  --border-light: #ffffff;/* top/left */
+  --text: #111;
+  --muted: #444;
+  --accent: #2b59ff;      /* optional old-school blue */
+}
+
+/* Global */
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Utility bevels */
+.retro-raised {
+  background: var(--panel);
+  border-top: 2px solid var(--border-light);
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-dark);
+  border-bottom: 2px solid var(--border-dark);
+}
+
+.retro-sunken {
+  background: #ededed;
+  border-top: 2px solid var(--border-dark);
+  border-left: 2px solid var(--border-dark);
+  border-right: 2px solid var(--border-light);
+  border-bottom: 2px solid var(--border-light);
+}
+
+/* Retro buttons */
+.retro-button {
+  padding: 6px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border-top: 2px solid var(--border-light);
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-dark);
+  border-bottom: 2px solid var(--border-dark);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+
+  &:active {
+    background: #e6e6e6;
+    border-top: 2px solid var(--border-dark);
+    border-left: 2px solid var(--border-dark);
+    border-right: 2px solid var(--border-light);
+    border-bottom: 2px solid var(--border-light);
+  }
+}

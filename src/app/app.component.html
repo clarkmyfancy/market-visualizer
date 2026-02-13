@@ -1,13 +1,21 @@
-<main class="dashboard-container">
-  <header class="dashboard-header">
-    <h1>Market Visualizer</h1>
-    <p class="subtitle">Multi-Asset Performance Tracker</p>
+<main class="dashboard-container retro-raised">
+  <header class="dashboard-header retro-titlebar">
+    <div class="titlebar-left">
+      <span class="titlebar-title">ThriVis</span>
+      <span class="titlebar-subtitle">Multi-Asset Performance Tracker</span>
+    </div>
+    <div class="titlebar-right">
+      <span class="window-control"></span>
+      <span class="window-control"></span>
+      <span class="window-control"></span>
+    </div>
   </header>
 
-  <nav class="asset-navigation">
+  <nav class="asset-navigation retro-raised" aria-label="Assets">
     @for (asset of assets; track asset.id) {
       <button
-        class="asset-btn"
+        type="button"
+        class="asset-btn retro-button"
         (click)="selectAsset(asset)"
         [class.active]="marketService.selectedAsset()?.id === asset.id"
         [style.--accent-color]="asset.color">

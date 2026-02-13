@@ -1,79 +1,139 @@
-import { Component, ElementRef, effect, inject, viewChild, AfterViewInit, HostListener } from '@angular/core';
-import { MarketService } from '../../core/services/market.service';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import * as d3 from 'd3';
+
+import { MarketService } from '../../core/services/market.service';
+import { DataPoint } from '../../shared/models/market.model';
 
 @Component({
   selector: 'app-market-chart',
   standalone: true,
   templateUrl: './market-chart.component.html',
-  styleUrls: ['./market-chart.component.scss']
+  styleUrls: ['./market-chart.component.scss'],
 })
-export class MarketChartComponent implements AfterViewInit {
-  chartContainer = viewChild.required<ElementRef>('chartContainer');
-  marketService = inject(MarketService);
+export class MarketChartComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('chartContainer', { static: true })
+  chartContainer!: ElementRef<HTMLDivElement>;
 
-  constructor() {
-    // Redraw whenever the selected asset changes
-    effect(() => {
-      const asset = this.marketService.selectedAsset();
-      if (asset) this.render(asset);
+  readonly marketService = inject(MarketService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly viewReady = signal(false);
+  private resizeObserver?: ResizeObserver;
+
+  // ✅ Create effect in injection context (field initializer)
+  private readonly renderEffect = effect(
+    () => {
+      // Don’t render until ViewChild exists
+      if (!this.viewReady()) return;
+
+      const series = this.marketService.series();
+      const color = this.marketService.selectedAsset()?.color ?? '#3b82f6';
+      this.render(series, color);
+    }
+  );
+
+  ngAfterViewInit(): void {
+    this.viewReady.set(true);
+
+    this.resizeObserver = new ResizeObserver(() => {
+      const series = untracked(() => this.marketService.series());
+      const color = untracked(() => this.marketService.selectedAsset()?.color ?? '#3b82f6');
+      this.render(series, color);
     });
+
+    this.resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
-  @HostListener('window:resize')
-  onResize() {
-    const asset = this.marketService.selectedAsset();
-    if (asset) this.render(asset);
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
   }
 
-  ngAfterViewInit() {
-    const asset = this.marketService.selectedAsset();
-    if (asset) this.render(asset);
-  }
+  private render(series: DataPoint[], color: string): void {
+    const host = this.chartContainer?.nativeElement;
+    if (!host) return;
 
-  private render(asset: any) {
-    const el = this.chartContainer().nativeElement;
-    d3.select(el).selectAll('*').remove();
+    const container = d3.select(host);
+    container.selectAll('*').remove();
 
-    const margin = { top: 20, right: 30, bottom: 30, left: 50 };
-    const width = el.offsetWidth - margin.left - margin.right;
-    const height = el.offsetHeight - margin.top - margin.bottom;
+    if (!series || series.length === 0) return;
 
-    const svg = d3.select(el)
+    const rect = host.getBoundingClientRect();
+    const width = Math.max(320, Math.floor(rect.width || 0));
+    const height = Math.max(240, Math.floor(rect.height || 0));
+
+    const margin = { top: 16, right: 24, bottom: 28, left: 56 };
+    const innerWidth = Math.max(1, width - margin.left - margin.right);
+    const innerHeight = Math.max(1, height - margin.top - margin.bottom);
+
+    const xExtent = d3.extent(series, (d) => d.date);
+    if (!xExtent[0] || !xExtent[1]) return;
+
+    const yMin = d3.min(series, (d) => d.value);
+    const yMax = d3.max(series, (d) => d.value);
+    if (yMin == null || yMax == null) return;
+
+    const range = yMax - yMin;
+    const pad = range === 0 ? Math.max(1, Math.abs(yMax) * 0.01) : range * 0.05;
+
+    const x = d3.scaleTime().domain(xExtent as [Date, Date]).range([0, innerWidth]);
+    const y = d3
+      .scaleLinear()
+      .domain([yMin - pad, yMax + pad])
+      .range([innerHeight, 0])
+      .nice();
+
+    const svg = container
       .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // X and Y Scales
-    const xExtent = d3.extent(asset.history, (d: any) => d.date);
-    const x = d3.scaleTime()
-      .domain((xExtent[0] !== undefined && xExtent[1] !== undefined ? xExtent : [new Date(), new Date()]) as [Date, Date])
-      .range([0, width]);
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    const minVal = Number(d3.min(asset.history, (d: any) => d.value)) || 0;
-    const maxVal = Number(d3.max(asset.history, (d: any) => d.value)) || 0;
-    const y = d3.scaleLinear()
-      .domain([minVal * 0.95, maxVal * 1.05])
-      .range([height, 0]);
+    g.append('g')
+      .attr('class', 'grid')
+      .call(d3.axisLeft(y).ticks(6).tickSize(-innerWidth).tickFormat(() => ''))
+      .selectAll('line')
+      .attr('stroke', '#222');
 
-    // Draw Line
-    const lineGenerator = d3.line<any>()
-      .x(d => x(d.date))
-      .y(d => y(d.value))
+    g.select('.grid .domain').remove();
+
+    const line = d3
+      .line<DataPoint>()
+      .defined((d) => Number.isFinite(d.value) && !Number.isNaN(d.date.getTime()))
+      .x((d) => x(d.date))
+      .y((d) => y(d.value))
       .curve(d3.curveMonotoneX);
 
-    svg.append('path')
-      .datum(asset.history)
+    g.append('path')
+      .datum(series)
       .attr('fill', 'none')
-      .attr('stroke', asset.color)
-      .attr('stroke-width', 3)
-      .attr('d', lineGenerator);
+      .attr('stroke', color)
+      .attr('stroke-width', 2)
+      .attr('d', line);
 
-    // Add Axes
-    svg.append('g').attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x));
-    svg.append('g').call(d3.axisLeft(y));
+    g.append('g')
+      .attr('transform', `translate(0,${innerHeight})`)
+      .call(d3.axisBottom(x).ticks(6).tickSizeOuter(0));
+
+    const fmt = d3.format('~s');
+    g.append('g').call(
+      d3
+        .axisLeft(y)
+        .ticks(6)
+        .tickSizeOuter(0)
+        .tickFormat((d) => `$${fmt(Number(d))}`)
+    );
   }
 }

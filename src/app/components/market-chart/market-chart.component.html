@@ -4,6 +4,19 @@
       <span class="label">Asset</span>
       <span class="value">{{ marketService.selectedAsset()?.name ?? '—' }}</span>
     </div>
+
+    <div class="range" role="tablist" aria-label="Time range">
+      @for (r of ranges; track r.value) {
+        <button
+          type="button"
+          class="range-btn"
+          role="tab"
+          (click)="setRange(r.value)"
+          [class.active]="marketService.range() === r.value">
+          {{ r.label }}
+        </button>
+      }
+    </div>
   </div>
 
   <div class="chart-viewport">

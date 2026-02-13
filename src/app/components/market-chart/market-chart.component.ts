@@ -1,7 +1,6 @@
 import {
   AfterViewInit,
   Component,
-  DestroyRef,
   ElementRef,
   OnDestroy,
   ViewChild,
@@ -13,14 +12,12 @@ import {
 import * as d3 from 'd3';
 
 import { MarketService } from '../../core/services/market.service';
-import { DataPoint } from '../../shared/models/market.model';
+import { DataPoint, TimeRange } from '../../shared/models/market.model';
 
 type ThemeTokens = {
-  text: string;
   muted: string;
   borderDark: string;
   borderMid: string;
-  panel: string;
   chartBg: string;
   grid: string;
 };
@@ -36,7 +33,8 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   chartContainer!: ElementRef<HTMLDivElement>;
 
   readonly marketService = inject(MarketService);
-  private readonly destroyRef = inject(DestroyRef);
+
+  readonly ranges = this.marketService.getRangeOptions();
 
   private readonly viewReady = signal(false);
   private resizeObserver?: ResizeObserver;
@@ -65,28 +63,24 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
+  setRange(r: TimeRange): void {
+    this.marketService.setRange(r);
+  }
+
   private readThemeTokens(): ThemeTokens {
     const el = this.chartContainer.nativeElement;
-
-    // Variables are defined on the dashboard container; computed style will resolve them here.
     const cs = getComputedStyle(el);
 
-    const get = (name: string, fallback: string) => {
-      const v = cs.getPropertyValue(name).trim();
-      return v || fallback;
-    };
+    const get = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
 
     const borderDark = get('--border-dark', '#000');
     const borderMid = get('--border-mid', '#666');
-    const text = get('--text', '#111');
     const muted = get('--muted', '#444');
-    const panel = get('--panel', '#f3f3f3');
 
-    // Optional chart-specific vars (set in chart SCSS below)
-    const chartBg = get('--chart-bg', panel);
+    const chartBg = get('--chart-bg', get('--inset', '#dedede'));
     const grid = get('--chart-grid', borderMid);
 
-    return { text, muted, borderDark, borderMid, panel, chartBg, grid };
+    return { muted, borderDark, borderMid, chartBg, grid };
   }
 
   private render(series: DataPoint[], accentColor: string): void {
@@ -131,21 +125,13 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // Background inside SVG (so it matches theme even if container is transparent)
-    svg
-      .append('rect')
-      .attr('x', 0)
-      .attr('y', 0)
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', tokens.chartBg);
+    svg.append('rect').attr('width', width).attr('height', height).attr('fill', tokens.chartBg);
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Grid (theme-driven)
     g.append('g')
       .attr('class', 'grid')
-      .call(d3.axisLeft(y).ticks(6).tickSize(-innerWidth).tickFormat(() => ''))
+      .call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(() => ''))
       .selectAll('line')
       .attr('stroke', tokens.grid);
 
@@ -174,12 +160,11 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const yAxis = g.append('g').call(
       d3
         .axisLeft(y)
-        .ticks(6)
+        .ticks(5)
         .tickSizeOuter(0)
         .tickFormat((d) => `$${fmt(Number(d))}`)
     );
 
-    // Theme axis styling (don’t rely on global CSS)
     for (const axis of [xAxis, yAxis]) {
       axis.selectAll('.domain').attr('stroke', tokens.borderDark);
       axis.selectAll('.tick line').attr('stroke', tokens.borderMid);

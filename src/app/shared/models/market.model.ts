@@ -17,3 +17,5 @@ export interface CoinGeckoMarketChartResponse {
   market_caps: [number, number][];
   total_volumes: [number, number][];
 }
+
+export type TimeRange = 'day' | 'week' | 'month' | 'year' | '2y' | '4y' | '8y' | 'max';

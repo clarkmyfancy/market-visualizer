@@ -15,6 +15,16 @@ import * as d3 from 'd3';
 import { MarketService } from '../../core/services/market.service';
 import { DataPoint } from '../../shared/models/market.model';
 
+type ThemeTokens = {
+  text: string;
+  muted: string;
+  borderDark: string;
+  borderMid: string;
+  panel: string;
+  chartBg: string;
+  grid: string;
+};
+
 @Component({
   selector: 'app-market-chart',
   standalone: true,
@@ -31,25 +41,21 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   private readonly viewReady = signal(false);
   private resizeObserver?: ResizeObserver;
 
-  // ✅ Create effect in injection context (field initializer)
-  private readonly renderEffect = effect(
-    () => {
-      // Don’t render until ViewChild exists
-      if (!this.viewReady()) return;
+  private readonly renderEffect = effect(() => {
+    if (!this.viewReady()) return;
 
-      const series = this.marketService.series();
-      const color = this.marketService.selectedAsset()?.color ?? '#3b82f6';
-      this.render(series, color);
-    }
-  );
+    const series = this.marketService.series();
+    const accent = this.marketService.selectedAsset()?.color ?? '#3b82f6';
+    this.render(series, accent);
+  });
 
   ngAfterViewInit(): void {
     this.viewReady.set(true);
 
     this.resizeObserver = new ResizeObserver(() => {
       const series = untracked(() => this.marketService.series());
-      const color = untracked(() => this.marketService.selectedAsset()?.color ?? '#3b82f6');
-      this.render(series, color);
+      const accent = untracked(() => this.marketService.selectedAsset()?.color ?? '#3b82f6');
+      this.render(series, accent);
     });
 
     this.resizeObserver.observe(this.chartContainer.nativeElement);
@@ -59,9 +65,35 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
-  private render(series: DataPoint[], color: string): void {
+  private readThemeTokens(): ThemeTokens {
+    const el = this.chartContainer.nativeElement;
+
+    // Variables are defined on the dashboard container; computed style will resolve them here.
+    const cs = getComputedStyle(el);
+
+    const get = (name: string, fallback: string) => {
+      const v = cs.getPropertyValue(name).trim();
+      return v || fallback;
+    };
+
+    const borderDark = get('--border-dark', '#000');
+    const borderMid = get('--border-mid', '#666');
+    const text = get('--text', '#111');
+    const muted = get('--muted', '#444');
+    const panel = get('--panel', '#f3f3f3');
+
+    // Optional chart-specific vars (set in chart SCSS below)
+    const chartBg = get('--chart-bg', panel);
+    const grid = get('--chart-grid', borderMid);
+
+    return { text, muted, borderDark, borderMid, panel, chartBg, grid };
+  }
+
+  private render(series: DataPoint[], accentColor: string): void {
     const host = this.chartContainer?.nativeElement;
     if (!host) return;
+
+    const tokens = this.readThemeTokens();
 
     const container = d3.select(host);
     container.selectAll('*').remove();
@@ -99,13 +131,23 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
+    // Background inside SVG (so it matches theme even if container is transparent)
+    svg
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', tokens.chartBg);
+
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
+    // Grid (theme-driven)
     g.append('g')
       .attr('class', 'grid')
       .call(d3.axisLeft(y).ticks(6).tickSize(-innerWidth).tickFormat(() => ''))
       .selectAll('line')
-      .attr('stroke', '#222');
+      .attr('stroke', tokens.grid);
 
     g.select('.grid .domain').remove();
 
@@ -119,21 +161,29 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     g.append('path')
       .datum(series)
       .attr('fill', 'none')
-      .attr('stroke', color)
+      .attr('stroke', accentColor)
       .attr('stroke-width', 2)
       .attr('d', line);
 
-    g.append('g')
+    const xAxis = g
+      .append('g')
       .attr('transform', `translate(0,${innerHeight})`)
       .call(d3.axisBottom(x).ticks(6).tickSizeOuter(0));
 
     const fmt = d3.format('~s');
-    g.append('g').call(
+    const yAxis = g.append('g').call(
       d3
         .axisLeft(y)
         .ticks(6)
         .tickSizeOuter(0)
         .tickFormat((d) => `$${fmt(Number(d))}`)
     );
+
+    // Theme axis styling (don’t rely on global CSS)
+    for (const axis of [xAxis, yAxis]) {
+      axis.selectAll('.domain').attr('stroke', tokens.borderDark);
+      axis.selectAll('.tick line').attr('stroke', tokens.borderMid);
+      axis.selectAll('.tick text').attr('fill', tokens.muted).attr('font-size', 11);
+    }
   }
 }

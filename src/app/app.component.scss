@@ -1,170 +1,214 @@
-/* If you already put these variables in styles.scss, you can remove :host:root. */
-:host {
+/* Polished retro tokens + spacing */
+.dashboard-container {
+  /* spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+
+  /* theme tokens (light default) */
   --bg: #e9e9e9;
   --panel: #f3f3f3;
-  --border-dark: #7b7b7b;
-  --border-mid: #b5b5b5;
+  --panel-2: #e6e6e6;
+  --inset: #dedede;
+
   --border-light: #ffffff;
+  --border-mid: #b5b5b5;
+  --border-dark: #7b7b7b;
+
   --text: #111;
   --muted: #444;
-}
+  --focus: #2b59ff;
 
-/* Reuse the bevel utilities locally (if not global) */
-.retro-raised {
-  background: var(--panel);
-  border-top: 2px solid var(--border-light);
-  border-left: 2px solid var(--border-light);
-  border-right: 2px solid var(--border-dark);
-  border-bottom: 2px solid var(--border-dark);
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.retro-sunken {
-  background: #ededed;
-  border-top: 2px solid var(--border-dark);
-  border-left: 2px solid var(--border-dark);
-  border-right: 2px solid var(--border-light);
-  border-bottom: 2px solid var(--border-light);
-  border-radius: 0;
-}
-
-.retro-button {
-  padding: 6px 10px;
-  background: var(--panel);
-  color: var(--text);
-  border-top: 2px solid var(--border-light);
-  border-left: 2px solid var(--border-light);
-  border-right: 2px solid var(--border-dark);
-  border-bottom: 2px solid var(--border-dark);
-  border-radius: 0;
-  cursor: pointer;
-  user-select: none;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-
-  &:active {
-    background: #e6e6e6;
-    border-top: 2px solid var(--border-dark);
-    border-left: 2px solid var(--border-dark);
-    border-right: 2px solid var(--border-light);
-    border-bottom: 2px solid var(--border-light);
-  }
-}
-
-.dashboard-container {
   min-height: 100vh;
-  padding: 14px;
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.15px;
 
-  /* Make it feel like an old centered app window */
+  /* single-window layout */
   max-width: 1100px;
   margin: 18px auto;
-}
+  padding: var(--s-3);
 
-.dashboard-header {
-  margin-bottom: 10px;
-}
-
-/* Classic “window titlebar” */
-.retro-titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 8px 10px;
-
-  background: #d9d9d9;
+  /* outer window frame (2px bevel) */
   border-top: 2px solid var(--border-light);
   border-left: 2px solid var(--border-light);
   border-right: 2px solid var(--border-dark);
   border-bottom: 2px solid var(--border-dark);
+  background: var(--panel);
+}
+
+/* Dark theme overrides */
+.dashboard-container.theme-dark {
+  --bg: #141414;
+  --panel: #1f1f1f;
+  --panel-2: #262626;
+  --inset: #101010;
+
+  --border-light: #5a5a5a;
+  --border-mid: #3a3a3a;
+  --border-dark: #000000;
+
+  --text: #f0f0f0;
+  --muted: #bdbdbd;
+  --focus: #7aa2ff;
+}
+
+/* Titlebar: clean, minimal bevel */
+.titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+
+  padding: var(--s-2) var(--s-3);
+  background: var(--panel-2);
+
+  border-top: 1px solid var(--border-light);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
 
   .titlebar-left {
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: var(--s-2);
     min-width: 0;
   }
 
-  .titlebar-title {
-    font-weight: 800;
+  .title {
     font-size: 13px;
-    letter-spacing: 0.3px;
+    font-weight: 800;
+    letter-spacing: 0.25px;
   }
 
-  .titlebar-subtitle {
+  .subtitle {
     font-size: 12px;
+    font-weight: 600;
     color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
 
-  /* Decorative window controls (not functional) */
-  .titlebar-right {
-    display: flex;
-    gap: 6px;
-    margin-left: 10px;
+/* Toolbar strip */
+.toolbar {
+  margin-top: var(--s-2);
+  padding: var(--s-2);
 
-    .window-control {
-      width: 12px;
-      height: 12px;
-      background: #cfcfcf;
-      border-top: 2px solid var(--border-light);
-      border-left: 2px solid var(--border-light);
-      border-right: 2px solid var(--border-dark);
-      border-bottom: 2px solid var(--border-dark);
-    }
+  background: var(--panel);
+
+  border-top: 1px solid var(--border-light);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Content area */
+.content {
+  margin-top: var(--s-3);
+}
+
+/* Buttons (polished bevel, consistent focus) */
+.btn {
+  padding: 5px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  font-size: 12px;
+
+  border-top: 1px solid var(--border-light);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+
+  &:active {
+    background: var(--panel-2);
+    border-top: 1px solid var(--border-dark);
+    border-left: 1px solid var(--border-dark);
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
   }
 }
 
-.asset-navigation {
-  display: flex;
-  gap: 8px;
-  padding: 8px;
-  margin-bottom: 12px;
+.btn-ghost {
+  background: var(--panel-2);
+}
 
+/* Segmented control (retro-clean, no chunky pills) */
+.segmented {
+  display: flex;
+  gap: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
-  /* Make the nav feel like a separate raised strip */
-  background: var(--panel);
+  border-top: 1px solid var(--border-dark);
+  border-left: 1px solid var(--border-dark);
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
 
-  .asset-btn {
-    /* retro-button already sets most styles */
-    position: relative;
-
-    &.active {
-      /* Old Mac selection vibe: inset + accent strip */
-      background: #e6e6e6;
-      border-top: 2px solid var(--border-dark);
-      border-left: 2px solid var(--border-dark);
-      border-right: 2px solid var(--border-light);
-      border-bottom: 2px solid var(--border-light);
-    }
-
-    /* tiny accent underline to keep your per-asset color */
-    &::after {
-      content: "";
-      position: absolute;
-      left: 6px;
-      right: 6px;
-      bottom: 2px;
-      height: 2px;
-      background: transparent;
-    }
-
-    &.active::after {
-      background: var(--accent-color);
-    }
-  }
+  background: var(--inset);
 }
 
-.chart-section {
-  /* The chart component already has its own “window” styling */
-  width: 100%;
+.segmented-btn {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  border-right: 1px solid var(--border-mid);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  position: relative;
+
+  &:last-child {
+    border-right: 0;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+  }
+
+  &:active {
+    background: var(--panel-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px; /* keep focus inside segmented */
+  }
+
+  &.active {
+    background: var(--panel);
+  }
+
+  /* accent underline, subtle */
+  &::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 2px;
+    height: 2px;
+    background: transparent;
+  }
+
+  &.active::after {
+    background: var(--accent-color);
+  }
 }

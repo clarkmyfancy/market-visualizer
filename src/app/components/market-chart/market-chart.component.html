@@ -1,19 +1,17 @@
-<div class="chart-wrapper">
-  <div class="chart-header">
-    <h2 [style.color]="marketService.selectedAsset()?.color">
-      {{ marketService.selectedAsset()?.name ?? '—' }}
-    </h2>
+<div class="chart">
+  <div class="chart-top">
+    <div class="chart-title">
+      <span class="label">Asset</span>
+      <span class="value">{{ marketService.selectedAsset()?.name ?? '—' }}</span>
+    </div>
   </div>
 
-  <div class="chart-container">
-    <div class="chart-overlay" [class.visible]="marketService.isLoading()">
-      Loading…
-    </div>
-
-    <div class="chart-overlay error" [class.visible]="!!marketService.error()">
+  <div class="chart-viewport">
+    <div class="overlay" [class.visible]="marketService.isLoading()">Loading…</div>
+    <div class="overlay error" [class.visible]="!!marketService.error()">
       {{ marketService.error() }}
     </div>
 
-    <div #chartContainer class="chart-svg-host"></div>
+    <div #chartContainer class="svg-host"></div>
   </div>
 </div>

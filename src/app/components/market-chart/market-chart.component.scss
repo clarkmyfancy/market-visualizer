@@ -1,69 +1,76 @@
-.chart-wrapper {
-  background: var(--panel);
-  border-top: 2px solid var(--border-light);
-  border-left: 2px solid var(--border-light);
-  border-right: 2px solid var(--border-dark);
-  border-bottom: 2px solid var(--border-dark);
-  border-radius: 0;
-  padding: 10px;
-  box-shadow: none;
+.chart {
+  display: grid;
+  gap: var(--s-2);
+}
 
-  .chart-header {
-    margin: 0 0 8px 0;
-    padding: 6px 8px;
+/* Clean label row (no extra bevel) */
+.chart-top {
+  padding: 0 var(--s-1);
 
-    /* Title bar feel */
-    background: #d9d9d9;
-    border-top: 2px solid var(--border-light);
-    border-left: 2px solid var(--border-light);
-    border-right: 2px solid var(--border-dark);
-    border-bottom: 2px solid var(--border-dark);
+  .chart-title {
+    display: flex;
+    gap: var(--s-2);
+    align-items: baseline;
 
-    h2 {
-      margin: 0;
+    .label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+    }
+
+    .value {
       font-size: 13px;
-      font-weight: 700;
-      color: var(--text) !important; /* override inline color if needed */
-      letter-spacing: 0.3px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.2px;
     }
   }
+}
 
-  .chart-container {
-    position: relative;
+/* Sunken viewport: the retro “monitor” */
+.chart-viewport {
+  position: relative;
+  width: 100%;
+  height: 420px;
+
+  background: var(--inset);
+
+  border-top: 1px solid var(--border-dark);
+  border-left: 1px solid var(--border-dark);
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+
+  .svg-host {
     width: 100%;
-    height: 360px;
-    background: #ededed;
+    height: 100%;
+  }
 
-    /* sunken viewport */
-    border-top: 2px solid var(--border-dark);
-    border-left: 2px solid var(--border-dark);
-    border-right: 2px solid var(--border-light);
-    border-bottom: 2px solid var(--border-light);
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 
-    .chart-svg-host {
-      width: 100%;
-      height: 100%;
+    background: color-mix(in srgb, var(--bg) 85%, transparent 15%);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 12px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+
+    &.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    .chart-overlay {
-      background: rgba(233, 233, 233, 0.85);
-      color: var(--text);
-      border: 0;
-      font-weight: 600;
-
-      &.error {
-        background: rgba(233, 233, 233, 0.95);
-        color: #7a0000;
-      }
-    }
-
-    ::ng-deep {
-      .domain { stroke: var(--border-dark); }
-      .tick line { stroke: var(--border-mid); }
-      .tick text {
-        fill: var(--muted);
-        font-size: 11px;
-      }
+    &.error {
+      color: #7a0000;
     }
   }
 }

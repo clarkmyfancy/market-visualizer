@@ -1,187 +1,204 @@
 /* dashboard.component.scss */
 
-/* Polished retro tokens + spacing */
 .dashboard-container {
   /* spacing scale */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
   --s-4: 16px;
+  --s-5: 20px;
 
-  /* theme tokens (light default) */
-  --bg: #e9e9e9;
-  --panel: #f3f3f3;
-  --panel-2: #e6e6e6;
-  --inset: #dedede;
+  /* ink/paper palette */
+  --ink: #1b1b1b;
+  --paper: #f6f6f6;
+  --mint: #b7f0e3;
+  --mint-2: #a6e7d7;
 
-  --border-light: #ffffff;
-  --border-mid: #b5b5b5;
-  --border-dark: #7b7b7b;
+  /* base theme tokens (light default) */
+  --bg: var(--paper);
+  --panel: #ffffff;
+  --panel-2: #f0f0f0;
+  --inset: #efefef;
+
+  --border-mid: #c8c8c8;
 
   --text: #111;
   --muted: #444;
   --focus: #2b59ff;
 
+  /* CHART tokens (light) */
+  --chart-bg: #f7f7f7;
+  --chart-grid: rgba(0, 0, 0, 0.18);
+  --chart-axis: rgba(0, 0, 0, 0.55);
+  --chart-text: rgba(0, 0, 0, 0.92);
+  --chart-muted: rgba(0, 0, 0, 0.68);
+
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.15px;
 
-  /* Responsive width WITHOUT media queries */
   box-sizing: border-box;
   width: min(1100px, 100%);
   margin: clamp(0px, 2vh, 18px) auto;
   padding: clamp(var(--s-2), 2vw, var(--s-3));
 
-  /* outer window frame (2px bevel) */
-  border-top: 2px solid var(--border-light);
-  border-left: 2px solid var(--border-light);
-  border-right: 2px solid var(--border-dark);
-  border-bottom: 2px solid var(--border-dark);
-  background: var(--panel);
+  /* thick ink frame + slight offset shadow */
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 0 var(--ink);
 
-  /* Allow container queries for internal layout decisions if needed */
+  background: var(--panel);
   container-type: inline-size;
   container-name: dash;
 }
 
 /* Dark theme overrides */
 .dashboard-container.theme-dark {
-  --bg: #141414;
-  --panel: #1f1f1f;
-  --panel-2: #262626;
+  --paper: #121212;
+  --bg: #121212;
+  --panel: #1b1b1b;
+  --panel-2: #222;
   --inset: #101010;
 
-  --border-light: #5a5a5a;
-  --border-mid: #3a3a3a;
-  --border-dark: #000000;
-
   --text: #f0f0f0;
-  --muted: #bdbdbd;
-  --focus: #7aa2ff;
+  --muted: rgba(255, 255, 255, 0.72);
+
+  --ink: #000;
+  --mint: #2a7f72;
+  --mint-2: #226b60;
+
+  /* CHART tokens (dark) */
+  --chart-bg: #101010;
+  --chart-grid: rgba(255, 255, 255, 0.14);
+  --chart-axis: rgba(255, 255, 255, 0.55);
+  --chart-text: rgba(255, 255, 255, 0.92);
+  --chart-muted: rgba(255, 255, 255, 0.72);
 }
 
-/* Titlebar: clean, minimal bevel */
-.titlebar {
+/* --- Top chrome --- */
+.topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--s-3);
 
   padding: var(--s-2) var(--s-3);
-  background: var(--panel-2);
+  background: var(--mint);
 
-  border-top: 1px solid var(--border-light);
-  border-left: 1px solid var(--border-light);
-  border-right: 1px solid var(--border-dark);
-  border-bottom: 1px solid var(--border-dark);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 0 var(--ink);
 }
 
-.titlebar-left {
+.topbar-left,
+.topbar-right {
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
   min-width: 0;
 }
 
-.title {
+.app-title {
+  font-weight: 950;
   font-size: 13px;
+  letter-spacing: 0.3px;
+
+  /* Make it clearly NOT a button */
+  cursor: default;
+  user-select: text;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.app-subtitle {
   font-weight: 800;
-  letter-spacing: 0.25px;
-}
-
-.subtitle {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: rgba(0, 0, 0, 0.65);
+
+  cursor: default;
+  user-select: text;
 }
 
-/* Toolbar strip */
-.toolbar {
-  margin-top: var(--s-2);
-  padding: var(--s-2);
+.dashboard-container.theme-dark .app-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- Workbar (assets only) --- */
+.workbar {
+  margin-top: var(--s-3);
+  padding: var(--s-3);
 
   background: var(--panel);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 0 var(--ink);
 
-  border-top: 1px solid var(--border-light);
-  border-left: 1px solid var(--border-light);
-  border-right: 1px solid var(--border-dark);
-  border-bottom: 1px solid var(--border-dark);
-
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
+  display: grid;
+  gap: var(--s-3);
 }
 
-/* Content area */
-.content {
-  margin-top: var(--s-3);
-}
+/* --- “Chip” buttons (buttons should look clickable) --- */
+.chip {
+  padding: 8px 12px;
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 0 var(--ink);
 
-/* Buttons (polished bevel, consistent focus) */
-.btn {
-  padding: 5px 10px;
   background: var(--panel);
   color: var(--text);
-  border-radius: 0;
+
+  font-weight: 950;
+  font-size: 12px;
+  letter-spacing: 0.25px;
+
   cursor: pointer;
   user-select: none;
-  font-weight: 700;
-  font-size: 12px;
-
-  border-top: 1px solid var(--border-light);
-  border-left: 1px solid var(--border-light);
-  border-right: 1px solid var(--border-dark);
-  border-bottom: 1px solid var(--border-dark);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:active {
-    background: var(--panel-2);
-    border-top: 1px solid var(--border-dark);
-    border-left: 1px solid var(--border-dark);
-    border-right: 1px solid var(--border-light);
-    border-bottom: 1px solid var(--border-light);
+    box-shadow: 1px 1px 0 0 var(--ink);
+    transform: translate(2px, 2px);
   }
 
   &:focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 }
 
-.btn-ghost {
-  background: var(--panel-2);
+.chip-ghost {
+  background: var(--panel);
+  opacity: 0.95;
 }
 
-/* Segmented control (retro-clean, no chunky pills) */
+/* --- Assets segmented tabs --- */
+.assetbar {
+  display: block;
+}
+
 .segmented {
   display: flex;
   gap: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
-  border-top: 1px solid var(--border-dark);
-  border-left: 1px solid var(--border-dark);
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
-
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 0 var(--ink);
   background: var(--inset);
-
   width: 100%;
 }
 
 .segmented-btn {
   flex: 0 0 auto;
-  padding: 6px 10px;
+  padding: 10px 12px;
   background: transparent;
   color: var(--text);
   border: 0;
-  border-right: 1px solid var(--border-mid);
+  border-right: 3px solid var(--ink);
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 950;
   font-size: 12px;
   position: relative;
 
@@ -190,7 +207,7 @@
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+    background: color-mix(in srgb, var(--panel) 80%, transparent 20%);
   }
 
   &:active {
@@ -209,10 +226,10 @@
   &::after {
     content: "";
     position: absolute;
-    left: 8px;
-    right: 8px;
-    bottom: 2px;
-    height: 2px;
+    left: 10px;
+    right: 10px;
+    bottom: 6px;
+    height: 3px;
     background: transparent;
   }
 
@@ -221,19 +238,25 @@
   }
 }
 
-/* Container query to simplify titlebar on narrow widths (no @media) */
+/* Content */
+.content {
+  margin-top: var(--s-3);
+}
+
+/* Container query: narrow chrome layout */
 @container dash (max-width: 640px) {
-  .titlebar {
+  .topbar {
     flex-direction: column;
     align-items: stretch;
     gap: var(--s-2);
   }
 
-  .subtitle {
-    display: none;
+  .topbar-left,
+  .topbar-right {
+    justify-content: space-between;
   }
 
-  .toolbar {
-    padding: var(--s-1);
+  .app-subtitle {
+    display: none;
   }
 }

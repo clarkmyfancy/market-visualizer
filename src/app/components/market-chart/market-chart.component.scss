@@ -5,18 +5,18 @@
   width: 100%;
 }
 
-/*
-  Container-query based responsive layout:
-  - Desktop: title left, range right
-  - Narrow containers: stack + center, wrap range buttons
-*/
 .chart {
   width: 100%;
   box-sizing: border-box;
 
-  /* Enable container queries based on this component's inline size */
   container-type: inline-size;
   container-name: chart;
+
+  padding: 12px;
+
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 0 var(--ink);
+  background: var(--panel);
 }
 
 .chart-top {
@@ -24,68 +24,78 @@
   justify-content: space-between;
   align-items: flex-end;
   gap: 12px;
-  flex-wrap: wrap; /* prevents overflow on narrow widths */
-  margin-bottom: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
+/* Title/labels should NOT look clickable */
 .chart-title {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: baseline;
   min-width: 0;
+
+  cursor: default;
+  user-select: text;
 }
 
 .chart-title .label {
   color: var(--muted);
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 900;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
+
+  /* explicitly non-button-y */
+  pointer-events: none;
 }
 
 .chart-title .value {
-  font-weight: 800;
+  font-weight: 950;
   font-size: 14px;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  pointer-events: none;
 }
 
+/* time range buttons */
 .range {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap; /* key: wraps instead of running off-screen */
+  flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 100%;
 }
 
 .range-btn {
   flex: 0 0 auto;
-  padding: 5px 8px;
+  padding: 8px 10px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 950;
+
   background: var(--panel);
   color: var(--text);
   border-radius: 0;
   cursor: pointer;
 
-  border-top: 1px solid var(--border-light);
-  border-left: 1px solid var(--border-light);
-  border-right: 1px solid var(--border-dark);
-  border-bottom: 1px solid var(--border-dark);
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 0 var(--ink);
+
+  &:hover {
+    background: color-mix(in srgb, var(--panel) 75%, var(--mint) 25%);
+  }
 
   &:active {
-    background: var(--panel-2);
-    border-top: 1px solid var(--border-dark);
-    border-left: 1px solid var(--border-dark);
-    border-right: 1px solid var(--border-light);
-    border-bottom: 1px solid var(--border-light);
+    box-shadow: 1px 1px 0 0 var(--ink);
+    transform: translate(2px, 2px);
   }
 
   &:focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   &.active {
@@ -97,7 +107,13 @@
   position: relative;
   width: 100%;
   max-width: 100%;
-  overflow: hidden; /* prevents svg bleed */
+  overflow: hidden;
+
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 0 var(--ink);
+
+  /* actual chart “paper” comes from theme tokens */
+  background: var(--chart-bg);
 }
 
 .svg-host {
@@ -105,19 +121,16 @@
   height: clamp(240px, 45vh, 360px);
 }
 
-/* Overlays */
+/* overlays */
 .overlay {
   position: absolute;
   inset: 0;
   display: none;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+
+  font-weight: 950;
   background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
-  border-top: 1px solid var(--border-light);
-  border-left: 1px solid var(--border-light);
-  border-right: 1px solid var(--border-dark);
-  border-bottom: 1px solid var(--border-dark);
   pointer-events: none;
 }
 
@@ -129,27 +142,24 @@
   background: color-mix(in srgb, #ff0000 10%, var(--panel) 90%);
 }
 
-/*
-  Container query: when the chart container is narrow,
-  stack + center header and center the range buttons.
-*/
-@container chart (max-width: 520px) {
+/* Narrow container layout: center/stack */
+@container chart (max-width: 560px) {
   .chart-top {
     flex-direction: column;
     align-items: center;
     gap: 10px;
   }
 
-  .chart-title {
+  .range {
     justify-content: center;
     width: 100%;
   }
 
   .chart-title .label {
-    display: none; /* simplify on narrow widths */
+    display: none;
   }
 
-  .range {
+  .chart-title {
     justify-content: center;
     width: 100%;
   }

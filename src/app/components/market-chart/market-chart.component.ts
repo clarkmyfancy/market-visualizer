@@ -125,7 +125,11 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    svg.append('rect').attr('width', width).attr('height', height).attr('fill', tokens.chartBg);
+    svg.append('rect')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('fill', tokens.chartBg)
+    .attr('fill', 'var(--chart-bg)');
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -133,7 +137,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('class', 'grid')
       .call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(() => ''))
       .selectAll('line')
-      .attr('stroke', tokens.grid);
+      .attr('stroke', 'var(--chart-grid)');
 
     g.select('.grid .domain').remove();
 

@@ -29,17 +29,6 @@
           </select>
         </label>
 
-        <label class="compare-field">
-          <span class="compare-label">View</span>
-          <select
-            #normalizeSelect
-            class="compare-select"
-            [value]="marketService.normalizeMode()"
-            (change)="setNormalizeMode(normalizeSelect.value)">
-            <option value="index">Indexed (100)</option>
-            <option value="pct">% Change</option>
-          </select>
-        </label>
       }
     </div>
   </div>

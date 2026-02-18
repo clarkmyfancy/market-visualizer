@@ -15,7 +15,6 @@ import * as d3 from 'd3';
 import {
   ChartLine,
   MarketService,
-  NormalizeMode,
 } from '../../core/services/market.service';
 import { TimeRange } from '../../shared/models/market.model';
 
@@ -28,7 +27,7 @@ type ThemeTokens = {
   chartMuted: string;
 };
 
-type RenderMode = 'price' | NormalizeMode;
+type RenderMode = 'price' | 'pct';
 
 @Component({
   selector: 'app-market-chart',
@@ -108,11 +107,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.marketService.setSecondaryAsset(assetId);
   }
 
-  setNormalizeMode(mode: string): void {
-    if (mode !== 'index' && mode !== 'pct') return;
-    this.marketService.setNormalizeMode(mode);
-  }
-
   isRangeDisabled(r: TimeRange): boolean {
     const asset = this.marketService.selectedAsset();
     if (asset?.id !== 'austin-real-estate') return false;
@@ -147,7 +141,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private currentRenderMode(): RenderMode {
-    return this.marketService.compareEnabled() ? this.marketService.normalizeMode() : 'price';
+    return this.marketService.compareEnabled() ? 'pct' : 'price';
   }
 
   private installThemeObservers(): void {
@@ -363,12 +357,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       return (value) => `$${fmt(value)}`;
     }
 
-    if (mode === 'pct') {
-      const fmt = d3.format('.2~f');
-      return (value) => `${fmt(value)}%`;
-    }
-
     const fmt = d3.format('.2~f');
-    return (value) => fmt(value);
+    return (value) => `${fmt(value)}%`;
   }
 }

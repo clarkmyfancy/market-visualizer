@@ -6,8 +6,6 @@ import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.mo
 import { AustinHousingDataService } from './data/austin-housing-data.service';
 import { CryptoMarketDataService } from './data/crypto-market-data.service';
 
-export type NormalizeMode = 'index' | 'pct';
-
 export interface ChartPoint {
   date: Date;
   value: number | null;
@@ -57,7 +55,6 @@ export class MarketService {
 
   readonly compareEnabled = signal<boolean>(false);
   readonly secondaryAssetId = signal<string | null>(null);
-  readonly normalizeMode = signal<NormalizeMode>('index');
 
   private readonly fullSeriesByAsset = signal<Map<string, DataPoint[]>>(new Map());
   private readonly fullSeriesLoadingAssets = signal<Set<string>>(new Set());
@@ -94,20 +91,13 @@ export class MarketService {
     if (!primaryFullSeries?.length || !secondaryFullSeries?.length) return [];
 
     const aligned = this.alignSeriesWithStepHold(primaryFullSeries, secondaryFullSeries);
-    const mode = this.normalizeMode();
-
-    const normalizedPrimary = this.normalizeAlignedSeries(
+    const visibleAligned = this.filterAlignedSeriesByRange(
       aligned.primary,
-      primaryFullSeries[0].value,
-      mode
-    );
-    const normalizedSecondary = this.normalizeAlignedSeries(
       aligned.secondary,
-      secondaryFullSeries[0].value,
-      mode
+      this.range()
     );
-
-    const visible = this.filterAlignedSeriesByRange(normalizedPrimary, normalizedSecondary, this.range());
+    const normalizedPrimary = this.normalizeSeriesToPercentChange(visibleAligned.primary);
+    const normalizedSecondary = this.normalizeSeriesToPercentChange(visibleAligned.secondary);
 
     return [
       {
@@ -115,14 +105,14 @@ export class MarketService {
         assetName: primaryAsset.name,
         color: primaryAsset.color,
         strokeStyle: 'solid',
-        points: visible.primary,
+        points: normalizedPrimary,
       },
       {
         assetId: secondaryAsset.id,
         assetName: secondaryAsset.name,
         color: secondaryAsset.color,
         strokeStyle: 'dashed',
-        points: visible.secondary,
+        points: normalizedSecondary,
       },
     ];
   });
@@ -186,10 +176,6 @@ export class MarketService {
       this.enforceRangeForCurrentContext(true);
       void this.preloadCompareSeries();
     }
-  }
-
-  setNormalizeMode(mode: NormalizeMode): void {
-    this.normalizeMode.set(mode);
   }
 
   setRange(range: TimeRange): void {
@@ -405,11 +391,12 @@ export class MarketService {
     return { primary: alignedPrimary, secondary: alignedSecondary };
   }
 
-  private normalizeAlignedSeries(
-    series: ChartPoint[],
-    baseValue: number,
-    mode: NormalizeMode
-  ): ChartPoint[] {
+  private normalizeSeriesToPercentChange(series: ChartPoint[]): ChartPoint[] {
+    const basePoint = series.find(
+      (point) => point.value != null && Number.isFinite(point.value)
+    );
+    const baseValue = basePoint?.value;
+
     if (!Number.isFinite(baseValue) || baseValue === 0) {
       return series.map((point) => ({ date: point.date, value: null }));
     }
@@ -419,8 +406,7 @@ export class MarketService {
         return { date: point.date, value: null };
       }
 
-      const ratio = point.value / baseValue;
-      const normalized = mode === 'index' ? ratio * 100 : (ratio - 1) * 100;
+      const normalized = ((point.value / baseValue) - 1) * 100;
 
       return {
         date: point.date,

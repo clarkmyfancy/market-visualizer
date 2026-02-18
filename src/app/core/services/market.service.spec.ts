@@ -227,7 +227,7 @@ describe('MarketService', () => {
     expect(service.secondaryAssetId()).toBe('austin-real-estate');
   });
 
-  it('aligns compare series with step-hold and keeps normalization base at dataset start', async () => {
+  it('aligns compare series with step-hold and rebases percent change to visible range start', async () => {
     const bitcoin = getAssetById(service, 'bitcoin');
 
     service.selectAsset(bitcoin);
@@ -249,13 +249,8 @@ describe('MarketService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const indexLines = service.chartLines();
-    expect(indexLines).toHaveLength(2);
-    expect(indexLines[0].points.map((point) => point.value)).toEqual([100, 100, 200]);
-    expect(indexLines[1].points.map((point) => point.value)).toEqual([null, 100, 200]);
-
-    service.setNormalizeMode('pct');
     const pctLines = service.chartLines();
+    expect(pctLines).toHaveLength(2);
     expect(pctLines[0].points.map((point) => point.value)).toEqual([0, 0, 100]);
     expect(pctLines[1].points.map((point) => point.value)).toEqual([null, 0, 100]);
 
@@ -265,8 +260,8 @@ describe('MarketService', () => {
     bitcoinWeekRequest.stream.complete();
 
     const weekLines = service.chartLines();
-    expect(weekLines[0].points.map((point) => point.value)).toEqual([100]);
-    expect(weekLines[1].points.map((point) => point.value)).toEqual([100]);
+    expect(weekLines[0].points.map((point) => point.value)).toEqual([0]);
+    expect(weekLines[1].points.map((point) => point.value)).toEqual([0]);
   });
 
   it('hides 2Y/5Y/Max and coerces blocked ranges when compare includes crypto', () => {

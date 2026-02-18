@@ -1,20 +1,11 @@
 /* dashboard.component.scss */
 
 .dashboard-container {
-  /* spacing scale */
-  --s-1: 4px;
-  --s-2: 8px;
-  --s-3: 12px;
-  --s-4: 16px;
-  --s-5: 20px;
-
-  /* ink/paper palette */
   --ink: #1b1b1b;
   --paper: #f6f6f6;
   --mint: #b7f0e3;
   --mint-2: #a6e7d7;
 
-  /* base theme tokens (light default) */
   --bg: var(--paper);
   --panel: #ffffff;
   --panel-2: #f0f0f0;
@@ -26,7 +17,6 @@
   --muted: #444;
   --focus: #2b59ff;
 
-  /* CHART tokens (light) */
   --chart-bg: #f7f7f7;
   --chart-grid: rgba(0, 0, 0, 0.18);
   --chart-axis: rgba(0, 0, 0, 0.55);
@@ -38,20 +28,18 @@
   color: var(--text);
 
   box-sizing: border-box;
-  width: min(1100px, 100%);
-  margin: clamp(0px, 2vh, 18px) auto;
-  padding: clamp(var(--s-2), 2vw, var(--s-3));
+  width: min(var(--size-content-max-width), 100%);
+  margin: clamp(0rem, 2vh, var(--size-container-margin-max)) auto;
+  padding: clamp(var(--space-2), 2vw, var(--space-3));
 
-  /* thick ink frame + slight offset shadow */
-  border: 3px solid var(--ink);
-  box-shadow: 6px 6px 0 0 var(--ink);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--ink);
 
   background: var(--panel);
   container-type: inline-size;
   container-name: dash;
 }
 
-/* Dark theme overrides */
 .dashboard-container.theme-dark {
   --paper: #121212;
   --bg: #121212;
@@ -66,7 +54,6 @@
   --mint: #2a7f72;
   --mint-2: #226b60;
 
-  /* CHART tokens (dark) */
   --chart-bg: #101010;
   --chart-grid: rgba(255, 255, 255, 0.14);
   --chart-axis: rgba(255, 255, 255, 0.55);
@@ -74,42 +61,39 @@
   --chart-muted: rgba(255, 255, 255, 0.72);
 }
 
-/* --- Top chrome --- */
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--space-3);
 
-  padding: var(--s-2) var(--s-3);
+  padding: var(--space-2) var(--space-3);
   background: var(--mint);
 
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 0 var(--ink);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
 }
 
 .topbar-left,
 .topbar-right {
   display: flex;
   align-items: baseline;
-  gap: var(--s-2);
+  gap: var(--space-2);
   min-width: 0;
 }
 
-/* --- Workbar (assets only) --- */
 .workbar {
-  margin-top: var(--s-3);
-  padding: var(--s-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
 
   background: var(--panel);
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 0 var(--ink);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
 
   display: grid;
-  gap: var(--s-3);
+  gap: var(--space-3);
 }
 
-/* --- Assets segmented tabs --- */
 .assetbar {
   display: block;
 }
@@ -120,23 +104,21 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
-  border: 3px solid var(--ink);
-  box-shadow: 3px 3px 0 0 var(--ink);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
   background: var(--inset);
   width: 100%;
 }
 
-/* Content */
 .content {
-  margin-top: var(--s-3);
+  margin-top: var(--space-3);
 }
 
-/* Container query: narrow chrome layout */
-@container dash (max-width: 640px) {
+@container dash (max-width: 40rem) {
   .topbar {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--s-2);
+    gap: var(--space-2);
   }
 
   .topbar-left,

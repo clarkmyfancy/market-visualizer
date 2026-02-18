@@ -9,11 +9,25 @@ const apiServer = spawn('node', ['server.js'], {
   shell: true,
 });
 
-const webServer = spawn('npx', ['ng', 'serve', '--port', '4200'], {
-  cwd,
-  stdio: 'inherit',
-  shell: true,
-});
+const webServer = spawn(
+  'npx',
+  [
+    'ng',
+    'serve',
+    'market-visualizer',
+    '--configuration',
+    'development',
+    '--port',
+    '4200',
+    '--proxy-config',
+    'proxy.conf.json',
+  ],
+  {
+    cwd,
+    stdio: 'inherit',
+    shell: true,
+  }
+);
 
 const shutdown = () => {
   if (!apiServer.killed) apiServer.kill('SIGTERM');

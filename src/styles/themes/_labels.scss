@@ -1,7 +1,7 @@
 /* Label theme */
 .app-subtitle {
   font-weight: 800;
-  font-size: 12px;
+  font-size: var(--font-size-chip);
   color: rgba(0, 0, 0, 0.65);
   cursor: default;
   user-select: text;
@@ -14,8 +14,8 @@
 .chart-title .label {
   color: var(--muted);
   font-weight: 900;
-  font-size: 11px;
+  font-size: var(--font-size-label);
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: var(--letter-spacing-label);
   pointer-events: none;
 }

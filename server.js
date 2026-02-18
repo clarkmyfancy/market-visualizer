@@ -5,79 +5,90 @@ const { Readable } = require('stream');
 const app = express();
 
 const DIST_PATH = path.join(__dirname, 'dist/market-visualizer');
-const REDFIN_BASE_URL =
-  'https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker';
 const FRED_GRAPH_CSV_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
+const FRED_SERIES_TXT_URL = 'https://fred.stlouisfed.org/data/MEDLISPRI12420.txt';
 const COINGECKO_PRO_BASE_URL = 'https://pro-api.coingecko.com/api/v3';
 const COINGECKO_PUBLIC_BASE_URL = 'https://api.coingecko.com/api/v3';
-const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || 'CG-8WjPCEtCRsev3NWYCvcAPBfL';
+const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY?.trim() || '';
 
-app.use('/api', (_req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin ?? '';
+  const isLocalOrigin =
+    typeof origin === 'string' &&
+    (origin.startsWith('http://localhost:4200') || origin.startsWith('http://127.0.0.1:4200'));
+
+  if (isLocalOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (_req.method === 'OPTIONS') {
+  if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
   }
+
   next();
 });
-
-async function proxyRedfinFile(res, filename) {
-  try {
-    const upstream = await fetch(`${REDFIN_BASE_URL}/${filename}`);
-
-    if (!upstream.ok) {
-      res.status(upstream.status).send(`Redfin upstream request failed (${upstream.status}).`);
-      return;
-    }
-
-    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-
-    if (upstream.body) {
-      Readable.fromWeb(upstream.body).pipe(res);
-      return;
-    }
-
-    const buffer = Buffer.from(await upstream.arrayBuffer());
-    res.send(buffer);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    res.status(502).send(`Redfin upstream request failed: ${message}`);
-  }
-}
 
 async function proxyFredAustinMedianListing(req, res) {
   const cosd = typeof req.query.cosd === 'string' ? req.query.cosd : '';
   const coed = typeof req.query.coed === 'string' ? req.query.coed : '';
 
-  const upstreamUrl = new URL(FRED_GRAPH_CSV_URL);
-  upstreamUrl.searchParams.set('id', 'MEDLISPRI12420');
-  if (cosd) upstreamUrl.searchParams.set('cosd', cosd);
-  if (coed) upstreamUrl.searchParams.set('coed', coed);
+  const boundedCsvUrl = new URL(FRED_GRAPH_CSV_URL);
+  boundedCsvUrl.searchParams.set('id', 'MEDLISPRI12420');
+  if (cosd) boundedCsvUrl.searchParams.set('cosd', cosd);
+  if (coed) boundedCsvUrl.searchParams.set('coed', coed);
 
-  try {
-    const upstream = await fetch(upstreamUrl);
-    if (!upstream.ok) {
-      res.status(upstream.status).send(`FRED upstream request failed (${upstream.status}).`);
-      return;
+  const fallbackTxtUrl = new URL(FRED_SERIES_TXT_URL);
+  if (cosd) fallbackTxtUrl.searchParams.set('cosd', cosd);
+  if (coed) fallbackTxtUrl.searchParams.set('coed', coed);
+
+  const attempts = [];
+  const fetchWithTimeout = async (url, timeoutMs) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
     }
+  };
 
-    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'text/csv; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=1800');
+  const upstreamCandidates = [
+    { label: 'FRED graph csv', url: boundedCsvUrl, timeoutMs: 12000 },
+    { label: 'FRED txt fallback', url: fallbackTxtUrl, timeoutMs: 8000 },
+  ];
 
-    if (upstream.body) {
-      Readable.fromWeb(upstream.body).pipe(res);
+  for (const candidate of upstreamCandidates) {
+    try {
+      const upstream = await fetchWithTimeout(candidate.url, candidate.timeoutMs);
+      if (!upstream.ok) {
+        attempts.push(`${candidate.label}: HTTP ${upstream.status}`);
+        continue;
+      }
+
+      res.setHeader('Content-Type', upstream.headers.get('content-type') || 'text/csv; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=1800');
+
+      if (upstream.body) {
+        Readable.fromWeb(upstream.body).pipe(res);
+        return;
+      }
+
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+      res.send(buffer);
       return;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        attempts.push(`${candidate.label}: timeout after ${candidate.timeoutMs}ms`);
+      } else {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        attempts.push(`${candidate.label}: ${message}`);
+      }
     }
-
-    const buffer = Buffer.from(await upstream.arrayBuffer());
-    res.send(buffer);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    res.status(502).send(`FRED upstream request failed: ${message}`);
   }
+
+  res.status(502).send(`FRED upstream request failed. Attempts: ${attempts.join(' | ')}`);
 }
 
 app.get('/api/fred/austin-median-listing.csv', async (req, res) => {
@@ -106,7 +117,7 @@ app.get('/api/coingecko/coins/:coinId/market_chart', async (req, res) => {
 
   const requestFrom = async (baseUrl, authHeaderName) => {
     const headers = { Accept: 'application/json' };
-    if (COINGECKO_API_KEY) {
+    if (COINGECKO_API_KEY && authHeaderName) {
       headers[authHeaderName] = COINGECKO_API_KEY;
     }
 
@@ -133,28 +144,26 @@ app.get('/api/coingecko/coins/:coinId/market_chart', async (req, res) => {
   };
 
   try {
-    let { upstream, payload } = await requestFrom(COINGECKO_PRO_BASE_URL, 'x-cg-pro-api-key');
+    let response;
 
-    if (shouldRetryWithDemoHost(payload)) {
-      ({ upstream, payload } = await requestFrom(COINGECKO_PUBLIC_BASE_URL, 'x-cg-demo-api-key'));
+    if (COINGECKO_API_KEY) {
+      response = await requestFrom(COINGECKO_PRO_BASE_URL, 'x-cg-pro-api-key');
+
+      if (shouldRetryWithDemoHost(response.payload)) {
+        response = await requestFrom(COINGECKO_PUBLIC_BASE_URL, 'x-cg-demo-api-key');
+      }
+    } else {
+      response = await requestFrom(COINGECKO_PUBLIC_BASE_URL, undefined);
     }
 
-    res.status(upstream.status);
-    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json');
+    res.status(response.upstream.status);
+    res.setHeader('Content-Type', response.upstream.headers.get('content-type') || 'application/json');
     res.setHeader('Cache-Control', 'public, max-age=30');
-    res.send(payload);
+    res.send(response.payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     res.status(502).json({ error: `CoinGecko upstream request failed: ${message}` });
   }
-});
-
-app.get('/api/redfin/city-market-tracker.gz', async (_req, res) => {
-  await proxyRedfinFile(res, 'city_market_tracker.tsv000.gz');
-});
-
-app.get('/api/redfin/metro-market-tracker.gz', async (_req, res) => {
-  await proxyRedfinFile(res, 'redfin_metro_market_tracker.tsv000.gz');
 });
 
 app.use(express.static(DIST_PATH));
@@ -165,5 +174,8 @@ app.get('/*', (_req, res) => {
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
+  if (!COINGECKO_API_KEY) {
+    console.warn('COINGECKO_API_KEY is not set. Requests may be rate-limited.');
+  }
   console.log(`Server running on port ${PORT}`);
 });

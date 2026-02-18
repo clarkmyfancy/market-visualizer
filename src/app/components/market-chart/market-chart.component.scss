@@ -12,10 +12,10 @@
   container-type: inline-size;
   container-name: chart;
 
-  padding: 12px;
+  padding: var(--space-3);
 
-  border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 0 var(--ink);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
   background: var(--panel);
 }
 
@@ -23,15 +23,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
 }
 
-/* time range buttons */
 .range {
   display: flex;
-  gap: 6px;
+  gap: calc(var(--space-2) - var(--space-1) / 2);
   flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 100%;
@@ -43,19 +42,16 @@
   max-width: 100%;
   overflow: hidden;
 
-  border: 3px solid var(--ink);
-  box-shadow: 3px 3px 0 0 var(--ink);
-
-  /* actual chart “paper” comes from theme tokens */
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
   background: var(--chart-bg);
 }
 
 .svg-host {
   width: 100%;
-  height: clamp(240px, 45vh, 360px);
+  height: clamp(var(--size-chart-min-height), 45vh, var(--size-chart-max-height));
 }
 
-/* overlays */
 .overlay {
   position: absolute;
   inset: 0;
@@ -76,12 +72,11 @@
   background: color-mix(in srgb, #ff0000 10%, var(--panel) 90%);
 }
 
-/* Narrow container layout: center/stack */
-@container chart (max-width: 560px) {
+@container chart (max-width: 35rem) {
   .chart-top {
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: calc(var(--space-2) + var(--space-1) / 2);
   }
 
   .range {

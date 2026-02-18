@@ -14,6 +14,46 @@
   --text: #111;
   --muted: #444;
   --accent: #2b59ff;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+
+  --line-thin: 2px;
+  --line-thick: 3px;
+
+  --shadow-offset-pressed: 1px;
+  --shadow-offset-sm: 3px;
+  --shadow-offset-md: 4px;
+  --shadow-offset-lg: 6px;
+  --shadow-press-translate: 2px;
+
+  --font-size-label: 11px;
+  --font-size-chip: 12px;
+  --font-size-body: 14px;
+  --font-size-title-sm: 14px;
+  --font-size-title-xs: 13px;
+
+  --letter-spacing-dashboard: 0.15px;
+  --letter-spacing-body: 0.2px;
+  --letter-spacing-chip: 0.25px;
+  --letter-spacing-title: 0.3px;
+  --letter-spacing-label: 0.6px;
+
+  --size-content-max-width: 1100px;
+  --size-container-margin-max: 18px;
+  --size-chart-min-height: 240px;
+  --size-chart-max-height: 360px;
+
+  --size-range-indicator-inset: 8px;
+  --size-range-indicator-inset-wide: 10px;
+  --size-range-indicator-bottom: 4px;
+  --size-range-indicator-bottom-wide: 6px;
+  --size-range-indicator-height: 3px;
+
+  --motion-fast: 120ms;
 }
 
 html,

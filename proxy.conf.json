@@ -1,4 +1,9 @@
 {
+  "/api/coingecko": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": true
+  },
   "/api/fred/austin-median-listing.csv": {
     "target": "https://fred.stlouisfed.org",
     "secure": true,

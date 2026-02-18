@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, map, of } from 'rxjs';
+import { catchError, map, of, throwError } from 'rxjs';
 
 import {
   CoinGeckoMarketChartResponse,
@@ -12,8 +12,9 @@ import {
 @Injectable({ providedIn: 'root' })
 export class MarketService {
   private readonly http = inject(HttpClient);
-  private readonly COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
   private readonly API_BASE = this.resolveApiBase();
+  private readonly COINGECKO_PROXY_BASE_URL = `${this.API_BASE}/api/coingecko`;
+  private readonly COINGECKO_PROXY_FALLBACK_BASE_URL = '/api/coingecko';
 
   // Use same-origin endpoints to avoid browser CORS failures against Redfin S3.
   // Metric used: median_sale_price for Austin, TX.
@@ -130,15 +131,24 @@ export class MarketService {
     // Keep point counts reasonable.
     params = params.set('interval', 'daily');
 
-    // Optional demo key.
-    const demoKey = this.getDemoApiKey();
-    if (demoKey) params = params.set('x_cg_demo_api_key', demoKey);
-
-    const url = `${this.COINGECKO_BASE_URL}/coins/${coinId}/market_chart`;
+    const primaryUrl = `${this.COINGECKO_PROXY_BASE_URL}/coins/${coinId}/market_chart`;
+    const fallbackUrl = `${this.COINGECKO_PROXY_FALLBACK_BASE_URL}/coins/${coinId}/market_chart`;
 
     this.http
-      .get<CoinGeckoMarketChartResponse>(url, { params })
+      .get<CoinGeckoMarketChartResponse>(primaryUrl, { params })
       .pipe(
+        catchError((err: unknown) => {
+          if (primaryUrl === fallbackUrl) {
+            return throwError(() => err);
+          }
+
+          // Fallback to Angular dev proxy only when the direct local API is unreachable.
+          if (!(err instanceof HttpErrorResponse) || err.status !== 0) {
+            return throwError(() => err);
+          }
+
+          return this.http.get<CoinGeckoMarketChartResponse>(fallbackUrl, { params });
+        }),
         map((res) => this.normalizeMarketChart(res)),
         catchError((err: unknown) => {
           this.error.set(this.toUserError(err));
@@ -615,14 +625,6 @@ export class MarketService {
     }
   }
 
-  private getDemoApiKey(): string | null {
-    try {
-      return localStorage.getItem('coingecko_demo_api_key');
-    } catch {
-      return null;
-    }
-  }
-
   private toAustinHousingError(err: unknown): string {
     if (err instanceof Error && err.message) {
       return `Austin housing price request failed: ${err.message}`;
@@ -637,13 +639,16 @@ export class MarketService {
     if (!(err instanceof HttpErrorResponse)) return fallback;
 
     if (err.status === 0) {
-      return 'Network error (status 0). Usually CORS, a blocked request, or you are offline.';
+      return 'Network error (status 0). Ensure both app and API server are running (`npm run dev`).';
+    }
+    if (err.status === 404 && err.url?.includes('/api/coingecko')) {
+      return 'Local CoinGecko API route not found (404). Restart with `npm run dev`.';
     }
     if (err.status === 429) {
-      return 'CoinGecko rate limit hit (429). Add a Demo API key in localStorage and refresh.';
+      return 'CoinGecko rate limit hit (429).';
     }
     if (err.status === 401 || err.status === 403) {
-      return 'CoinGecko rejected the request (401/403). You may need a Demo/Pro API key.';
+      return 'CoinGecko rejected the request (401/403). Check API key and plan access.';
     }
 
     return `HTTP ${err.status}: ${err.message || 'Request failed.'}`;

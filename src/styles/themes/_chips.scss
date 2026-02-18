@@ -34,12 +34,35 @@
 }
 
 .range-btn {
-  &:hover {
+  position: relative;
+
+  &:not(:disabled):hover {
     background: color-mix(in srgb, var(--panel) 75%, var(--mint) 25%);
   }
 
   &.active {
     background: var(--panel-2);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 4px;
+    height: 3px;
+    background: transparent;
+  }
+
+  &.active::after {
+    background: var(--accent-color, var(--focus, var(--accent)));
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 }
 

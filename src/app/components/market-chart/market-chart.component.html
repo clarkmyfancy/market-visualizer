@@ -1,8 +1,8 @@
 <div class="chart">
   <div class="chart-top">
     <div class="chart-title">
-      <span class="label">Asset</span>
-      <span class="value">{{ marketService.selectedAsset()?.name ?? '—' }}</span>
+      <span class="label">{{ headerLabel() }}</span>
+      <span class="value">{{ headerValue() }}</span>
     </div>
 
     <div class="range" role="tablist" aria-label="Time range">
@@ -12,6 +12,14 @@
           class="range-btn"
           role="tab"
           (click)="setRange(r.value)"
+          [style.--accent-color]="marketService.selectedAsset()?.color ?? '#3b82f6'"
+          [disabled]="isRangeDisabled(r.value)"
+          [attr.aria-disabled]="isRangeDisabled(r.value)"
+          [attr.title]="
+            isRangeDisabled(r.value)
+              ? 'Not available for real estate pricing'
+              : null
+          "
           [class.active]="marketService.range() === r.value">
           {{ r.label }}
         </button>

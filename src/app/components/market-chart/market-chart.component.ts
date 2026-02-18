@@ -36,6 +36,11 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   readonly marketService = inject(MarketService);
 
   readonly ranges = this.marketService.getRangeOptions();
+  private readonly usdFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  });
 
   private readonly viewReady = signal(false);
   private resizeObserver?: ResizeObserver;
@@ -87,7 +92,34 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   }
 
   setRange(r: TimeRange): void {
+    if (this.isRangeDisabled(r)) return;
     this.marketService.setRange(r);
+  }
+
+  isRangeDisabled(r: TimeRange): boolean {
+    const asset = this.marketService.selectedAsset();
+    if (asset?.id !== 'austin-real-estate') return false;
+    return r === 'week' || r === 'month';
+  }
+
+  headerLabel(): string {
+    const asset = this.marketService.selectedAsset();
+    if (asset?.id === 'austin-real-estate') return this.marketService.austinMetricLabel();
+    return 'Asset';
+  }
+
+  headerValue(): string {
+    const asset = this.marketService.selectedAsset();
+    if (!asset) return '—';
+
+    if (asset.id !== 'austin-real-estate') {
+      return asset.name;
+    }
+
+    const latest = this.marketService.latestPoint();
+    if (!latest) return '—';
+
+    return this.usdFormatter.format(latest.value);
   }
 
   private installThemeObservers(): void {

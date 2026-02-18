@@ -1,0 +1,26 @@
+{
+  "/api/fred/austin-median-listing.csv": {
+    "target": "https://fred.stlouisfed.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/fred/austin-median-listing\\.csv$": "/graph/fredgraph.csv?id=MEDLISPRI12420"
+    }
+  },
+  "/api/redfin/city-market-tracker.gz": {
+    "target": "https://redfin-public-data.s3.us-west-2.amazonaws.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/redfin/city-market-tracker\\.gz$": "/redfin_market_tracker/city_market_tracker.tsv000.gz"
+    }
+  },
+  "/api/redfin/metro-market-tracker.gz": {
+    "target": "https://redfin-public-data.s3.us-west-2.amazonaws.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/redfin/metro-market-tracker\\.gz$": "/redfin_market_tracker/redfin_metro_market_tracker.tsv000.gz"
+    }
+  }
+}

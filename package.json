@@ -9,7 +9,7 @@
   },
   "scripts": {
     "ng": "ng",
-    "dev": "ng serve",
+    "dev": "node scripts/dev.js",
     "start": "node server.js",
     "build": "ng build",
     "build:prod": "ng build --configuration production",

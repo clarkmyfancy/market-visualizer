@@ -5,30 +5,86 @@
       <span class="value">{{ headerValue() }}</span>
     </div>
 
-    <div class="range" role="tablist" aria-label="Time range">
-      @for (r of ranges; track r.value) {
-        <button
-          type="button"
-          class="range-btn"
-          role="tab"
-          (click)="setRange(r.value)"
-          [style.--accent-color]="marketService.selectedAsset()?.color ?? '#3b82f6'"
-          [disabled]="isRangeDisabled(r.value)"
-          [attr.aria-disabled]="isRangeDisabled(r.value)"
-          [attr.title]="
-            isRangeDisabled(r.value)
-              ? 'Not available for real estate pricing'
-              : null
-          "
-          [class.active]="marketService.range() === r.value">
-          {{ r.label }}
-        </button>
+    <div class="chart-controls" aria-label="Compare controls">
+      <button
+        type="button"
+        class="range-btn compare-toggle"
+        [class.active]="marketService.compareEnabled()"
+        [attr.aria-pressed]="marketService.compareEnabled()"
+        (click)="setCompareEnabled(!marketService.compareEnabled())">
+        Compare
+      </button>
+
+      @if (marketService.compareEnabled()) {
+        <label class="compare-field">
+          <span class="compare-label">Compare with</span>
+          <select
+            #secondarySelect
+            class="compare-select"
+            [value]="marketService.secondaryAssetId() ?? ''"
+            (change)="setSecondaryAsset(secondarySelect.value)">
+            @for (asset of compareAssetOptions(); track asset.id) {
+              <option [value]="asset.id">{{ asset.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="compare-field">
+          <span class="compare-label">View</span>
+          <select
+            #normalizeSelect
+            class="compare-select"
+            [value]="marketService.normalizeMode()"
+            (change)="setNormalizeMode(normalizeSelect.value)">
+            <option value="index">Indexed (100)</option>
+            <option value="pct">% Change</option>
+          </select>
+        </label>
       }
     </div>
   </div>
 
+  <div class="range" role="tablist" aria-label="Time range">
+    @for (r of ranges(); track r.value) {
+      <button
+        type="button"
+        class="range-btn"
+        role="tab"
+        (click)="setRange(r.value)"
+        [style.--accent-color]="marketService.selectedAsset()?.color ?? '#3b82f6'"
+        [disabled]="isRangeDisabled(r.value)"
+        [attr.aria-disabled]="isRangeDisabled(r.value)"
+        [attr.title]="
+          isRangeDisabled(r.value)
+            ? 'Not available for real estate pricing'
+            : null
+        "
+        [class.active]="marketService.range() === r.value">
+        {{ r.label }}
+      </button>
+    }
+  </div>
+
+  @if (marketService.compareEnabled() && chartLines().length === 2) {
+    <div class="chart-legend" aria-label="Comparison legend">
+      @for (line of chartLines(); track line.assetId) {
+        <div class="legend-item">
+          <span
+            class="legend-line"
+            [class.dashed]="line.strokeStyle === 'dashed'"
+            [style.--line-color]="line.color"></span>
+          <span class="legend-label">{{ line.assetName }}</span>
+        </div>
+      }
+    </div>
+  }
+
   <div class="chart-viewport">
-    <div class="overlay" [class.visible]="marketService.isLoading()">Loading…</div>
+    <div
+      class="overlay"
+      [class.visible]="marketService.isLoading() || marketService.isCompareLoading()">
+      Loading…
+    </div>
     <div class="overlay error" [class.visible]="!!marketService.error()">
       {{ marketService.error() }}
     </div>

@@ -23,7 +23,7 @@ Interactive market dashboard for comparing Bitcoin, Ethereum, and Austin housing
 1. Clone: `git clone https://github.com/clarkmyfancy/market-visualizer.git`
 2. Install deps: `npm install`
 3. Set CoinGecko key (recommended):
-   - `export COINGECKO_API_KEY=your_key_here`
+   - `export COINGECKO_DEMO_API_KEY=your_key_here`
 4. Start app + API server: `npm run dev`
 5. Open: [http://localhost:4200](http://localhost:4200)
 

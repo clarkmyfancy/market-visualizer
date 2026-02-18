@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  computed,
   effect,
   inject,
   signal,
@@ -11,8 +12,12 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 
-import { MarketService } from '../../core/services/market.service';
-import { DataPoint, TimeRange } from '../../shared/models/market.model';
+import {
+  ChartLine,
+  MarketService,
+  NormalizeMode,
+} from '../../core/services/market.service';
+import { TimeRange } from '../../shared/models/market.model';
 
 type ThemeTokens = {
   ink: string;
@@ -22,6 +27,8 @@ type ThemeTokens = {
   chartText: string;
   chartMuted: string;
 };
+
+type RenderMode = 'price' | NormalizeMode;
 
 @Component({
   selector: 'app-market-chart',
@@ -35,7 +42,10 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
 
   readonly marketService = inject(MarketService);
 
-  readonly ranges = this.marketService.getRangeOptions();
+  readonly ranges = computed(() => this.marketService.getVisibleRangeOptions());
+  readonly compareAssetOptions = computed(() => this.marketService.getCompareAssetOptions());
+  readonly chartLines = this.marketService.chartLines;
+
   private readonly usdFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -45,7 +55,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   private readonly viewReady = signal(false);
   private resizeObserver?: ResizeObserver;
 
-  // NEW: re-render chart when theme tokens change (theme toggle / system theme changes)
   private themeObserver?: MutationObserver;
   private mediaQueryList?: MediaQueryList;
   private queuedThemeRerender = false;
@@ -53,27 +62,23 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   private readonly renderEffect = effect(() => {
     if (!this.viewReady()) return;
 
-    const series = this.marketService.series();
-    const accent = this.marketService.selectedAsset()?.color ?? '#3b82f6';
-    this.render(series, accent);
+    const lines = this.chartLines();
+    const mode = this.currentRenderMode();
+    this.render(lines, mode);
   });
 
   ngAfterViewInit(): void {
     this.viewReady.set(true);
 
     this.resizeObserver = new ResizeObserver(() => {
-      const series = untracked(() => this.marketService.series());
-      const accent = untracked(() => this.marketService.selectedAsset()?.color ?? '#3b82f6');
-      this.render(series, accent);
+      const lines = untracked(() => this.chartLines());
+      const mode = untracked(() => this.currentRenderMode());
+      this.render(lines, mode);
     });
 
     this.resizeObserver.observe(this.chartContainer.nativeElement);
 
-    // Theme changes may happen without series changing (so renderEffect won't run).
-    // Watch for class/style changes up the tree and rerender to pick up new CSS variables.
     this.installThemeObservers();
-
-    // Initial paint after observers installed
     this.requestThemeRerender();
   }
 
@@ -82,7 +87,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.themeObserver?.disconnect();
 
     if (this.mediaQueryList) {
-      // removeEventListener is supported in modern browsers; fallback handled defensively
       try {
         this.mediaQueryList.removeEventListener('change', this.onSystemThemeChange);
       } catch {
@@ -96,6 +100,19 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.marketService.setRange(r);
   }
 
+  setCompareEnabled(enabled: boolean): void {
+    this.marketService.setCompareEnabled(enabled);
+  }
+
+  setSecondaryAsset(assetId: string): void {
+    this.marketService.setSecondaryAsset(assetId);
+  }
+
+  setNormalizeMode(mode: string): void {
+    if (mode !== 'index' && mode !== 'pct') return;
+    this.marketService.setNormalizeMode(mode);
+  }
+
   isRangeDisabled(r: TimeRange): boolean {
     const asset = this.marketService.selectedAsset();
     if (asset?.id !== 'austin-real-estate') return false;
@@ -103,6 +120,8 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   }
 
   headerLabel(): string {
+    if (this.marketService.compareEnabled()) return 'Compare';
+
     const asset = this.marketService.selectedAsset();
     if (asset?.id === 'austin-real-estate') return this.marketService.austinMetricLabel();
     return 'Asset';
@@ -111,6 +130,11 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   headerValue(): string {
     const asset = this.marketService.selectedAsset();
     if (!asset) return '—';
+
+    if (this.marketService.compareEnabled()) {
+      const secondary = this.marketService.getSecondaryAsset();
+      return secondary ? `${asset.name} vs ${secondary.name}` : asset.name;
+    }
 
     if (asset.id !== 'austin-real-estate') {
       return asset.name;
@@ -122,13 +146,13 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     return this.usdFormatter.format(latest.value);
   }
 
+  private currentRenderMode(): RenderMode {
+    return this.marketService.compareEnabled() ? this.marketService.normalizeMode() : 'price';
+  }
+
   private installThemeObservers(): void {
     const host = this.chartContainer.nativeElement;
-
-    // Watch the nearest dashboard container (where theme class/tokens live).
     const dash = host.closest('.dashboard-container') as HTMLElement | null;
-
-    // Fallback: observe documentElement if container isn't found.
     const target = dash ?? document.documentElement;
 
     this.themeObserver = new MutationObserver(() => {
@@ -140,8 +164,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       attributeFilter: ['class', 'style'],
     });
 
-    // Also rerender on OS-level theme changes (if your app applies theme automatically).
-    // Even if you don't, this is harmless.
     this.mediaQueryList = window.matchMedia?.('(prefers-color-scheme: dark)') ?? undefined;
     if (this.mediaQueryList) {
       try {
@@ -160,17 +182,15 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (this.queuedThemeRerender) return;
     this.queuedThemeRerender = true;
 
-    // Coalesce multiple mutations into one rerender
     requestAnimationFrame(() => {
       this.queuedThemeRerender = false;
 
-      const series = untracked(() => this.marketService.series());
-      const accent = untracked(() => this.marketService.selectedAsset()?.color ?? '#3b82f6');
+      const lines = untracked(() => this.chartLines());
+      const mode = untracked(() => this.currentRenderMode());
 
-      // If no data yet, nothing to rerender.
-      if (!series || series.length === 0) return;
+      if (!lines || lines.length === 0) return;
 
-      this.render(series, accent);
+      this.render(lines, mode);
     });
   }
 
@@ -190,7 +210,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     return { ink, axis, grid, chartBg, chartText, chartMuted };
   }
 
-  private render(series: DataPoint[], accentColor: string): void {
+  private render(lines: ChartLine[], mode: RenderMode): void {
     const host = this.chartContainer?.nativeElement;
     if (!host) return;
 
@@ -199,7 +219,22 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const container = d3.select(host);
     container.selectAll('*').remove();
 
-    if (!series || series.length === 0) return;
+    if (!lines || lines.length === 0) return;
+
+    const allPoints = lines.flatMap((line) => line.points);
+    if (allPoints.length === 0) return;
+
+    const validDates = allPoints
+      .map((point) => point.date)
+      .filter((date) => !Number.isNaN(date.getTime()));
+
+    if (validDates.length === 0) return;
+
+    const numericValues = allPoints
+      .map((point) => point.value)
+      .filter((value): value is number => value != null && Number.isFinite(value));
+
+    if (numericValues.length === 0) return;
 
     const rect = host.getBoundingClientRect();
     const width = Math.max(1, Math.floor(rect.width || 0));
@@ -211,17 +246,17 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       top: 16,
       right: isNarrow ? 14 : 24,
       bottom: isNarrow ? 26 : 28,
-      left: isNarrow ? 50 : 56,
+      left: isNarrow ? 56 : 62,
     };
 
     const innerWidth = Math.max(1, width - margin.left - margin.right);
     const innerHeight = Math.max(1, height - margin.top - margin.bottom);
 
-    const xExtent = d3.extent(series, (d) => d.date);
+    const xExtent = d3.extent(validDates);
     if (!xExtent[0] || !xExtent[1]) return;
 
-    const yMin = d3.min(series, (d) => d.value);
-    const yMax = d3.max(series, (d) => d.value);
+    const yMin = d3.min(numericValues);
+    const yMax = d3.max(numericValues);
     if (yMin == null || yMax == null) return;
 
     const range = yMax - yMin;
@@ -244,10 +279,8 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
 
-    // Chart background “paper” from theme tokens
     svg.append('rect').attr('width', width).attr('height', height).attr('fill', tokens.chartBg);
 
-    // Ink frame
     svg.append('rect')
       .attr('x', 1.5)
       .attr('y', 1.5)
@@ -259,7 +292,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Grid (dotted)
     g.append('g')
       .attr('class', 'grid')
       .call(
@@ -276,38 +308,39 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
 
     g.select('.grid .domain').remove();
 
-    // Series line
-    const line = d3
-      .line<DataPoint>()
-      .defined((d) => Number.isFinite(d.value) && !Number.isNaN(d.date.getTime()))
+    const linePath = d3
+      .line<{ date: Date; value: number | null }>()
+      .defined((d) => d.value != null && Number.isFinite(d.value) && !Number.isNaN(d.date.getTime()))
       .x((d) => x(d.date))
-      .y((d) => y(d.value))
+      .y((d) => y(d.value as number))
       .curve(d3.curveMonotoneX);
 
-    g.append('path')
-      .datum(series)
-      .attr('fill', 'none')
-      .attr('stroke', accentColor)
-      .attr('stroke-width', 2.5)
-      .attr('stroke-linecap', 'round')
-      .attr('stroke-linejoin', 'round')
-      .attr('d', line);
+    for (const line of lines) {
+      g.append('path')
+        .datum(line.points)
+        .attr('fill', 'none')
+        .attr('stroke', line.color)
+        .attr('stroke-width', 2.5)
+        .attr('stroke-linecap', 'round')
+        .attr('stroke-linejoin', 'round')
+        .attr('stroke-dasharray', line.strokeStyle === 'dashed' ? '8,5' : null)
+        .attr('d', linePath);
+    }
 
     const xAxis = g
       .append('g')
       .attr('transform', `translate(0,${innerHeight})`)
       .call(d3.axisBottom(x).ticks(xTicks).tickSizeOuter(0));
 
-    const fmt = d3.format('~s');
+    const yTickFormat = this.getYAxisFormatter(mode);
     const yAxis = g.append('g').call(
       d3
         .axisLeft(y)
         .ticks(yTicks)
         .tickSizeOuter(0)
-        .tickFormat((d) => `$${fmt(Number(d))}`)
+        .tickFormat((value) => yTickFormat(Number(value)))
     );
 
-    // Axis styling: high-contrast
     for (const axisSel of [xAxis, yAxis]) {
       axisSel.selectAll('.domain').attr('stroke', tokens.axis).attr('stroke-width', 2);
       axisSel.selectAll('.tick line').attr('stroke', tokens.axis).attr('stroke-width', 2);
@@ -322,5 +355,20 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (isNarrow) {
       xAxis.selectAll<SVGTextElement, unknown>('.tick text').attr('dy', '0.9em');
     }
+  }
+
+  private getYAxisFormatter(mode: RenderMode): (value: number) => string {
+    if (mode === 'price') {
+      const fmt = d3.format('~s');
+      return (value) => `$${fmt(value)}`;
+    }
+
+    if (mode === 'pct') {
+      const fmt = d3.format('.2~f');
+      return (value) => `${fmt(value)}%`;
+    }
+
+    const fmt = d3.format('.2~f');
+    return (value) => fmt(value);
   }
 }

@@ -25,7 +25,47 @@
   align-items: flex-end;
   gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
+  margin-bottom: var(--space-2);
+}
+
+.chart-controls {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.compare-toggle {
+  min-width: 7.25rem;
+}
+
+.compare-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compare-label {
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+  white-space: nowrap;
+}
+
+.compare-select {
+  min-width: 10.25rem;
+  padding: var(--space-2) var(--space-2);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  background: var(--panel);
+  color: var(--text);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-chip);
+}
+
+.compare-select:focus-visible {
+  outline: var(--line-thin) solid var(--focus, var(--accent));
+  outline-offset: var(--shadow-offset-sm);
 }
 
 .range {
@@ -34,6 +74,36 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 100%;
+  margin-bottom: var(--space-2);
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend-line {
+  width: 1.75rem;
+  border-top: 3px solid var(--line-color, var(--ink));
+  border-radius: 999px;
+}
+
+.legend-line.dashed {
+  border-top-style: dashed;
+}
+
+.legend-label {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-chip);
 }
 
 .chart-viewport {
@@ -75,8 +145,26 @@
 @container chart (max-width: 35rem) {
   .chart-top {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: calc(var(--space-2) + var(--space-1) / 2);
+  }
+
+  .chart-controls {
+    width: 100%;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .compare-field {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+  }
+
+  .compare-select {
+    width: 100%;
   }
 
   .range {
@@ -91,5 +179,9 @@
   .chart-title {
     justify-content: center;
     width: 100%;
+  }
+
+  .chart-legend {
+    justify-content: center;
   }
 }

@@ -1,0 +1,37 @@
+/* Shared utility theme classes */
+.retro-raised {
+  background: var(--panel);
+  border-top: 2px solid var(--border-light);
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-dark);
+  border-bottom: 2px solid var(--border-dark);
+}
+
+.retro-sunken {
+  background: #ededed;
+  border-top: 2px solid var(--border-dark);
+  border-left: 2px solid var(--border-dark);
+  border-right: 2px solid var(--border-light);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.retro-button {
+  padding: 6px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border-top: 2px solid var(--border-light);
+  border-left: 2px solid var(--border-light);
+  border-right: 2px solid var(--border-dark);
+  border-bottom: 2px solid var(--border-dark);
+  border-radius: 0;
+  cursor: pointer;
+  user-select: none;
+
+  &:active {
+    background: #e6e6e6;
+    border-top: 2px solid var(--border-dark);
+    border-left: 2px solid var(--border-dark);
+    border-right: 2px solid var(--border-light);
+    border-bottom: 2px solid var(--border-light);
+  }
+}

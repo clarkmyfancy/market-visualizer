@@ -1,0 +1,24 @@
+/* Global reset + design tokens */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #e9e9e9;
+  --panel: #f3f3f3;
+  --border-dark: #7b7b7b;
+  --border-mid: #b5b5b5;
+  --border-light: #ffffff;
+  --text: #111;
+  --muted: #444;
+  --accent: #2b59ff;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}

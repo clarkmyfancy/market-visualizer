@@ -28,39 +28,6 @@
   margin-bottom: 10px;
 }
 
-/* Title/labels should NOT look clickable */
-.chart-title {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  min-width: 0;
-
-  cursor: default;
-  user-select: text;
-}
-
-.chart-title .label {
-  color: var(--muted);
-  font-weight: 900;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-
-  /* explicitly non-button-y */
-  pointer-events: none;
-}
-
-.chart-title .value {
-  font-weight: 950;
-  font-size: 14px;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  pointer-events: none;
-}
-
 /* time range buttons */
 .range {
   display: flex;
@@ -68,39 +35,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 100%;
-}
-
-.range-btn {
-  flex: 0 0 auto;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 950;
-
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 0;
-  cursor: pointer;
-
-  border: 3px solid var(--ink);
-  box-shadow: 3px 3px 0 0 var(--ink);
-
-  &:hover {
-    background: color-mix(in srgb, var(--panel) 75%, var(--mint) 25%);
-  }
-
-  &:active {
-    box-shadow: 1px 1px 0 0 var(--ink);
-    transform: translate(2px, 2px);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 3px;
-  }
-
-  &.active {
-    background: var(--panel-2);
-  }
 }
 
 .chart-viewport {

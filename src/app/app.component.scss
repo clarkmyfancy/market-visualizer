@@ -36,8 +36,6 @@
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  letter-spacing: 0.15px;
 
   box-sizing: border-box;
   width: min(1100px, 100%);
@@ -98,32 +96,6 @@
   min-width: 0;
 }
 
-.app-title {
-  font-weight: 950;
-  font-size: 13px;
-  letter-spacing: 0.3px;
-
-  /* Make it clearly NOT a button */
-  cursor: default;
-  user-select: text;
-  padding: 0;
-  border: 0;
-  box-shadow: none;
-}
-
-.app-subtitle {
-  font-weight: 800;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
-
-  cursor: default;
-  user-select: text;
-}
-
-.dashboard-container.theme-dark .app-subtitle {
-  color: rgba(255, 255, 255, 0.7);
-}
-
 /* --- Workbar (assets only) --- */
 .workbar {
   margin-top: var(--s-3);
@@ -135,42 +107,6 @@
 
   display: grid;
   gap: var(--s-3);
-}
-
-/* --- “Chip” buttons (buttons should look clickable) --- */
-.chip {
-  padding: 8px 12px;
-  border: 3px solid var(--ink);
-  box-shadow: 3px 3px 0 0 var(--ink);
-
-  background: var(--panel);
-  color: var(--text);
-
-  font-weight: 950;
-  font-size: 12px;
-  letter-spacing: 0.25px;
-
-  cursor: pointer;
-  user-select: none;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  &:active {
-    box-shadow: 1px 1px 0 0 var(--ink);
-    transform: translate(2px, 2px);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 3px;
-  }
-}
-
-.chip-ghost {
-  background: var(--panel);
-  opacity: 0.95;
 }
 
 /* --- Assets segmented tabs --- */
@@ -188,54 +124,6 @@
   box-shadow: 3px 3px 0 0 var(--ink);
   background: var(--inset);
   width: 100%;
-}
-
-.segmented-btn {
-  flex: 0 0 auto;
-  padding: 10px 12px;
-  background: transparent;
-  color: var(--text);
-  border: 0;
-  border-right: 3px solid var(--ink);
-  cursor: pointer;
-  font-weight: 950;
-  font-size: 12px;
-  position: relative;
-
-  &:last-child {
-    border-right: 0;
-  }
-
-  &:hover {
-    background: color-mix(in srgb, var(--panel) 80%, transparent 20%);
-  }
-
-  &:active {
-    background: var(--panel-2);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: -2px;
-  }
-
-  &.active {
-    background: var(--panel);
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: 6px;
-    height: 3px;
-    background: transparent;
-  }
-
-  &.active::after {
-    background: var(--accent-color);
-  }
 }
 
 /* Content */

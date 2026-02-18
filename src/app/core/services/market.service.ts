@@ -1,6 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { catchError, of } from 'rxjs';
 
 import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.model';
 import { AustinHousingDataService } from './data/austin-housing-data.service';
@@ -30,6 +29,7 @@ export class MarketService {
   readonly austinMetricLabel = signal<string>('Median Sale Price');
 
   private readonly seriesCache = new Map<string, DataPoint[]>();
+  private activeRequestToken = 0;
 
   getAssets(): MarketAsset[] {
     return this.availableAssets;
@@ -75,62 +75,76 @@ export class MarketService {
   }
 
   private fetchForAsset(asset: MarketAsset, range: TimeRange): void {
+    const requestToken = this.nextRequestToken();
     const effectiveRange = this.normalizeRangeForAsset(asset, range);
     const cacheKey = `${asset.id}::${effectiveRange}`;
     const cached = this.seriesCache.get(cacheKey);
     if (cached && cached.length > 0) {
+      this.error.set(null);
+      this.isLoading.set(false);
       this.series.set(cached);
       return;
     }
 
     this.series.set([]);
+    this.error.set(null);
+    this.isLoading.set(true);
 
     if (asset.category === 'crypto') {
-      this.fetchCryptoSeries(asset.id, effectiveRange, cacheKey);
+      this.fetchCryptoSeries(asset.id, effectiveRange, cacheKey, requestToken);
       return;
     }
 
     if (asset.category === 'real-estate' && asset.id === 'austin-real-estate') {
-      this.fetchAustinHousingSeries(asset.id, effectiveRange, cacheKey);
+      this.fetchAustinHousingSeries(effectiveRange, cacheKey, requestToken);
       return;
     }
 
+    if (!this.isRequestActive(requestToken)) return;
     this.error.set(`No data source wired up yet for category "${asset.category}".`);
+    this.finishRequest(requestToken);
   }
 
-  private fetchCryptoSeries(coinId: string, range: TimeRange, cacheKey: string): void {
-    this.isLoading.set(true);
-    this.error.set(null);
-
+  private fetchCryptoSeries(
+    coinId: string,
+    range: TimeRange,
+    cacheKey: string,
+    requestToken: number
+  ): void {
     this.cryptoData
       .loadSeries(coinId, range)
-      .pipe(
-        catchError((err: unknown) => {
-          this.error.set(this.toUserError(err));
-          return of([] as DataPoint[]);
-        })
-      )
-      .subscribe((points) => {
-        const current = this.selectedAsset();
-        if (current?.id === coinId && this.range() === range) {
+      .subscribe({
+        next: (points) => {
+          if (!this.isRequestActive(requestToken)) return;
+
           this.series.set(points);
-        }
 
-        if (points.length > 0) {
-          this.seriesCache.set(cacheKey, points);
-        }
+          if (points.length > 0) {
+            this.seriesCache.set(cacheKey, points);
+          }
+        },
+        error: (err: unknown) => {
+          if (!this.isRequestActive(requestToken)) return;
 
-        this.isLoading.set(false);
+          this.error.set(this.toUserError(err));
+          this.finishRequest(requestToken);
+        },
+        complete: () => {
+          this.finishRequest(requestToken);
+        }
       });
   }
 
-  private fetchAustinHousingSeries(assetId: string, range: TimeRange, cacheKey: string): void {
-    this.isLoading.set(true);
-    this.error.set(null);
-
+  private fetchAustinHousingSeries(
+    range: TimeRange,
+    cacheKey: string,
+    requestToken: number
+  ): void {
     this.housingData
       .loadSeries(range)
       .then((result) => {
+        if (!this.isRequestActive(requestToken)) return;
+
         const points = this.filterSeriesByRange(result.points, range);
         if (points.length === 0) {
           throw new Error('No Austin housing price points found in source data.');
@@ -138,24 +152,29 @@ export class MarketService {
 
         this.austinMetricLabel.set(result.metricLabel);
         this.seriesCache.set(cacheKey, points);
-
-        const current = this.selectedAsset();
-        if (current?.id === assetId && this.range() === range) {
-          this.series.set(points);
-        }
+        this.series.set(points);
       })
       .catch((err: unknown) => {
-        const current = this.selectedAsset();
-        if (current?.id === assetId && this.range() === range) {
-          this.error.set(this.toAustinHousingError(err));
-        }
+        if (!this.isRequestActive(requestToken)) return;
+        this.error.set(this.toAustinHousingError(err));
       })
       .finally(() => {
-        const current = this.selectedAsset();
-        if (current?.id === assetId && this.range() === range) {
-          this.isLoading.set(false);
-        }
+        this.finishRequest(requestToken);
       });
+  }
+
+  private nextRequestToken(): number {
+    this.activeRequestToken += 1;
+    return this.activeRequestToken;
+  }
+
+  private isRequestActive(token: number): boolean {
+    return token === this.activeRequestToken;
+  }
+
+  private finishRequest(token: number): void {
+    if (!this.isRequestActive(token)) return;
+    this.isLoading.set(false);
   }
 
   private filterSeriesByRange(series: DataPoint[], range: TimeRange): DataPoint[] {

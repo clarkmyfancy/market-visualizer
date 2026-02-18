@@ -1,0 +1,44 @@
+<main class="dashboard-container" [class]="themeClass()">
+  <header class="topbar" aria-label="App chrome">
+    <div class="topbar-left">
+      <div class="app-title" aria-label="App title">
+        Market Visualizer
+      </div>
+      <div class="app-subtitle" aria-label="Subtitle">
+        Multi-Asset Performance
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button
+        type="button"
+        class="chip chip-ghost"
+        (click)="toggleTheme()"
+        [attr.aria-pressed]="theme() === 'dark'">
+        {{ theme() === 'dark' ? 'Dark' : 'Light' }}
+      </button>
+    </div>
+  </header>
+
+  <section class="workbar" aria-label="Controls">
+    <nav class="assetbar" aria-label="Assets">
+      <div class="segmented" role="tablist" aria-label="Asset selector">
+        @for (asset of assets; track asset.id) {
+          <button
+            type="button"
+            class="segmented-btn"
+            role="tab"
+            (click)="selectAsset(asset)"
+            [class.active]="marketService.selectedAsset()?.id === asset.id"
+            [style.--accent-color]="asset.color">
+            {{ asset.name }}
+          </button>
+        }
+      </div>
+    </nav>
+  </section>
+
+  <section class="content">
+    <app-market-chart></app-market-chart>
+  </section>
+</main>

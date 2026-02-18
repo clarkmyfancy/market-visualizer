@@ -218,13 +218,11 @@ describe('MarketService', () => {
     ethereumMonthRequest.stream.next([makePoint(2, 200)]);
     ethereumMonthRequest.stream.complete();
 
-    const housingMaxRequest = getLastHousingCall(housingData, 'max');
-    housingMaxRequest.deferred.resolve({
-      points: [makePoint(3, 500000)],
-      metricLabel: 'Median Listing Price',
-    });
+    const goldYearRequest = getLastCryptoCall(cryptoData, 'tether-gold', 'year');
+    goldYearRequest.stream.next([makePoint(3, 2050)]);
+    goldYearRequest.stream.complete();
 
-    expect(service.secondaryAssetId()).toBe('austin-real-estate');
+    expect(service.secondaryAssetId()).toBe('tether-gold');
   });
 
   it('aligns compare series with step-hold and rebases percent change to visible range start', async () => {

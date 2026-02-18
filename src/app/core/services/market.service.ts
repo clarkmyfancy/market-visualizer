@@ -27,6 +27,7 @@ export class MarketService {
   private readonly availableAssets: MarketAsset[] = [
     { id: 'bitcoin', name: 'Bitcoin', category: 'crypto', color: '#f7931a' },
     { id: 'ethereum', name: 'Ethereum', category: 'crypto', color: '#627eea' },
+    { id: 'tether-gold', name: 'Gold', category: 'crypto', color: '#d4af37' },
     { id: 'austin-real-estate', name: 'Austin Housing', category: 'real-estate', color: '#22c55e' },
   ];
   private readonly rangeOptions: { value: TimeRange; label: string }[] = [
@@ -151,6 +152,13 @@ export class MarketService {
   }
 
   setCompareEnabled(enabled: boolean): void {
+    if (enabled) {
+      const primaryAsset = this.selectedAsset();
+      if (primaryAsset) {
+        this.ensureValidSecondaryAsset(primaryAsset.id);
+      }
+    }
+
     this.compareEnabled.set(enabled);
 
     if (!enabled) return;

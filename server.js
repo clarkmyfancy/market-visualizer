@@ -169,7 +169,7 @@ app.get('/api/fred/austin-median-listing.csv', async (req, res) => {
 
 app.get('/api/coingecko/coins/:coinId/market_chart', async (req, res) => {
   const coinId = String(req.params.coinId || '').trim().toLowerCase();
-  const allowedCoins = new Set(['bitcoin', 'ethereum']);
+  const allowedCoins = new Set(['bitcoin', 'ethereum', 'tether-gold']);
   if (!allowedCoins.has(coinId)) {
     res.status(400).json({ error: 'Unsupported coin id.' });
     return;

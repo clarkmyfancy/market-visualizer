@@ -117,6 +117,58 @@
   background: var(--chart-bg);
 }
 
+.hover-info {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  max-width: calc(100% - var(--space-3) * 2);
+  padding: var(--space-1) var(--space-2);
+
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  background: color-mix(in srgb, var(--panel) 92%, white 8%);
+
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+  pointer-events: none;
+}
+
+.hover-date {
+  white-space: nowrap;
+}
+
+.hover-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.hover-swatch {
+  width: 1rem;
+  border-top: 3px solid var(--hover-color, var(--ink));
+  border-radius: 999px;
+}
+
+.hover-swatch.dashed {
+  border-top-style: dashed;
+}
+
+.hover-name {
+  color: var(--muted);
+}
+
+.hover-value {
+  white-space: nowrap;
+}
+
 .svg-host {
   width: 100%;
   height: clamp(var(--size-chart-min-height), 45vh, var(--size-chart-max-height));
@@ -183,5 +235,9 @@
 
   .chart-legend {
     justify-content: center;
+  }
+
+  .hover-info {
+    display: none;
   }
 }

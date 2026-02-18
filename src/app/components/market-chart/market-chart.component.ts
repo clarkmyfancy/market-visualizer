@@ -29,6 +29,20 @@ type ThemeTokens = {
 
 type RenderMode = 'price' | 'pct';
 
+type HoverSeriesPoint = {
+  assetId: string;
+  assetName: string;
+  color: string;
+  strokeStyle: 'solid' | 'dashed';
+  value: number | null;
+};
+
+type HoverInfo = {
+  date: Date;
+  mode: RenderMode;
+  series: HoverSeriesPoint[];
+};
+
 @Component({
   selector: 'app-market-chart',
   standalone: true,
@@ -50,8 +64,23 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     currency: 'USD',
     maximumFractionDigits: 0,
   });
+  private readonly hoverDateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  private readonly hoverPctFormatter = new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+    signDisplay: 'exceptZero',
+  });
+  private readonly hoverPriceFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  });
 
   private readonly viewReady = signal(false);
+  readonly hoverInfo = signal<HoverInfo | null>(null);
   private resizeObserver?: ResizeObserver;
 
   private themeObserver?: MutationObserver;
@@ -64,7 +93,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const lines = this.chartLines();
     const mode = this.currentRenderMode();
     this.render(lines, mode);
-  });
+  }, { allowSignalWrites: true });
 
   ngAfterViewInit(): void {
     this.viewReady.set(true);
@@ -140,6 +169,24 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     return this.usdFormatter.format(latest.value);
   }
 
+  hoverDateLabel(): string {
+    const info = this.hoverInfo();
+    if (!info) return '';
+    return this.hoverDateFormatter.format(info.date);
+  }
+
+  hoverSeries(): HoverSeriesPoint[] {
+    return this.hoverInfo()?.series ?? [];
+  }
+
+  formatHoverValue(value: number | null, mode: RenderMode): string {
+    if (value == null || !Number.isFinite(value)) return '—';
+    if (mode === 'price') {
+      return this.hoverPriceFormatter.format(value);
+    }
+    return `${this.hoverPctFormatter.format(value)}%`;
+  }
+
   private currentRenderMode(): RenderMode {
     return this.marketService.compareEnabled() ? 'pct' : 'price';
   }
@@ -207,6 +254,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   private render(lines: ChartLine[], mode: RenderMode): void {
     const host = this.chartContainer?.nativeElement;
     if (!host) return;
+    this.hoverInfo.set(null);
 
     const tokens = this.readThemeTokens();
 
@@ -349,6 +397,115 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (isNarrow) {
       xAxis.selectAll<SVGTextElement, unknown>('.tick text').attr('dy', '0.9em');
     }
+
+    this.installHoverBehavior({
+      g,
+      x,
+      innerWidth,
+      innerHeight,
+      lines,
+      mode,
+      isNarrow,
+      tokens,
+    });
+  }
+
+  private installHoverBehavior(args: {
+    g: d3.Selection<SVGGElement, unknown, null, undefined>;
+    x: d3.ScaleTime<number, number>;
+    innerWidth: number;
+    innerHeight: number;
+    lines: ChartLine[];
+    mode: RenderMode;
+    isNarrow: boolean;
+    tokens: ThemeTokens;
+  }): void {
+    const { g, x, innerWidth, innerHeight, lines, mode, isNarrow, tokens } = args;
+
+    if (isNarrow || !this.isDesktopHoverCapable()) {
+      return;
+    }
+
+    const allTimestamps = Array.from(
+      new Set(
+        lines
+          .flatMap((line) => line.points)
+          .map((point) => point.date.getTime())
+          .filter((ts) => Number.isFinite(ts))
+      )
+    ).sort((a, b) => a - b);
+
+    if (!allTimestamps.length) return;
+
+    const valueByLineAndTimestamp = new Map<string, Map<number, number | null>>();
+    for (const line of lines) {
+      const byTimestamp = new Map<number, number | null>();
+      for (const point of line.points) {
+        byTimestamp.set(point.date.getTime(), point.value);
+      }
+      valueByLineAndTimestamp.set(line.assetId, byTimestamp);
+    }
+
+    const hoverLayer = g.append('g').attr('class', 'hover-layer');
+    const hoverRule = hoverLayer
+      .append('line')
+      .attr('y1', 0)
+      .attr('y2', innerHeight)
+      .attr('stroke', tokens.axis)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '4,4')
+      .style('display', 'none');
+
+    const interactionZone = g
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', innerWidth)
+      .attr('height', innerHeight)
+      .attr('fill', 'transparent')
+      .style('cursor', 'crosshair')
+      .style('pointer-events', 'all');
+
+    const setHoverFromTimestamp = (timestamp: number): void => {
+      const hoverDate = new Date(timestamp);
+      const hoverX = x(hoverDate);
+
+      hoverRule.attr('x1', hoverX).attr('x2', hoverX).style('display', null);
+
+      const series: HoverSeriesPoint[] = lines.map((line) => ({
+        assetId: line.assetId,
+        assetName: line.assetName,
+        color: line.color,
+        strokeStyle: line.strokeStyle,
+        value: valueByLineAndTimestamp.get(line.assetId)?.get(timestamp) ?? null,
+      }));
+
+      this.hoverInfo.set({ date: hoverDate, mode, series });
+    };
+
+    interactionZone.on('mousemove', (event: MouseEvent) => {
+      const [mouseX] = d3.pointer(event, g.node());
+      const clampedX = Math.max(0, Math.min(innerWidth, mouseX));
+      const hoveredTimestamp = x.invert(clampedX).getTime();
+      const nearestIndex = d3.bisectCenter(allTimestamps, hoveredTimestamp);
+      const nearestTimestamp = allTimestamps[nearestIndex];
+
+      if (nearestTimestamp == null) return;
+      setHoverFromTimestamp(nearestTimestamp);
+    });
+
+    interactionZone.on('mouseleave', () => {
+      hoverRule.style('display', 'none');
+      this.hoverInfo.set(null);
+    });
+  }
+
+  private isDesktopHoverCapable(): boolean {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   }
 
   private getYAxisFormatter(mode: RenderMode): (value: number) => string {

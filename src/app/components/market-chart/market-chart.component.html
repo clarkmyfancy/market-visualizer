@@ -69,6 +69,22 @@
   }
 
   <div class="chart-viewport">
+    @if (hoverInfo(); as info) {
+      <div class="hover-info" aria-live="polite">
+        <span class="hover-date">{{ hoverDateLabel() }}</span>
+        @for (seriesPoint of hoverSeries(); track seriesPoint.assetId) {
+          <span class="hover-item">
+            <span
+              class="hover-swatch"
+              [class.dashed]="seriesPoint.strokeStyle === 'dashed'"
+              [style.--hover-color]="seriesPoint.color"></span>
+            <span class="hover-name">{{ seriesPoint.assetName }}</span>
+            <span class="hover-value">{{ formatHoverValue(seriesPoint.value, info.mode) }}</span>
+          </span>
+        }
+      </div>
+    }
+
     <div
       class="overlay"
       [class.visible]="marketService.isLoading() || marketService.isCompareLoading()">

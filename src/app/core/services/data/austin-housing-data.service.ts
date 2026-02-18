@@ -53,6 +53,7 @@ export class AustinHousingDataService {
 
   private getDateWindowForRange(range: TimeRange): { cosd: string; coed: string } {
     const end = new Date();
+    end.setDate(end.getDate() - 1);
     const start = new Date(end);
 
     switch (range) {
@@ -83,7 +84,12 @@ export class AustinHousingDataService {
         break;
     }
 
-    const toIsoDate = (d: Date): string => d.toISOString().slice(0, 10);
+    const toIsoDate = (d: Date): string => {
+      const y = d.getFullYear();
+      const m = `${d.getMonth() + 1}`.padStart(2, '0');
+      const day = `${d.getDate()}`.padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
     return { cosd: toIsoDate(start), coed: toIsoDate(end) };
   }
 

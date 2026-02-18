@@ -6,7 +6,7 @@
   box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
   background: var(--panel);
   color: var(--text);
-  font-weight: 950;
+  font-weight: var(--font-weight-black);
   font-size: var(--font-size-chip);
   letter-spacing: var(--letter-spacing-chip);
   border-radius: 0;
@@ -74,7 +74,7 @@
   border: 0;
   border-right: var(--line-thick) solid var(--ink);
   cursor: pointer;
-  font-weight: 950;
+  font-weight: var(--font-weight-black);
   font-size: var(--font-size-chip);
   position: relative;
 

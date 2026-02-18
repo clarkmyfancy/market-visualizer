@@ -8,7 +8,7 @@
 }
 
 .retro-sunken {
-  background: #ededed;
+  background: var(--surface-sunken);
   border-top: var(--line-thin) solid var(--border-dark);
   border-left: var(--line-thin) solid var(--border-dark);
   border-right: var(--line-thin) solid var(--border-light);
@@ -28,7 +28,7 @@
   user-select: none;
 
   &:active {
-    background: #e6e6e6;
+    background: var(--surface-pressed);
     border-top: var(--line-thin) solid var(--border-dark);
     border-left: var(--line-thin) solid var(--border-dark);
     border-right: var(--line-thin) solid var(--border-light);

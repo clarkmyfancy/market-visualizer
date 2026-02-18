@@ -59,8 +59,8 @@
   align-items: center;
   justify-content: center;
 
-  font-weight: 950;
-  background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+  font-weight: var(--font-weight-black);
+  background: var(--overlay-backdrop);
   pointer-events: none;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .overlay.error {
-  background: color-mix(in srgb, #ff0000 10%, var(--panel) 90%);
+  background: var(--overlay-error-backdrop);
 }
 
 @container chart (max-width: 35rem) {

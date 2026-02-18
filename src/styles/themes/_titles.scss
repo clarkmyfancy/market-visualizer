@@ -1,6 +1,6 @@
 /* Title theme */
 .app-title {
-  font-weight: 950;
+  font-weight: var(--font-weight-black);
   font-size: var(--font-size-title-xs);
   letter-spacing: var(--letter-spacing-title);
   cursor: default;
@@ -20,7 +20,7 @@
 }
 
 .chart-title .value {
-  font-weight: 950;
+  font-weight: var(--font-weight-black);
   font-size: var(--font-size-title-sm);
   min-width: 0;
   white-space: nowrap;

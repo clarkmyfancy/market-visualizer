@@ -1,28 +1,6 @@
 /* dashboard.component.scss */
 
 .dashboard-container {
-  --ink: #1b1b1b;
-  --paper: #f6f6f6;
-  --mint: #b7f0e3;
-  --mint-2: #a6e7d7;
-
-  --bg: var(--paper);
-  --panel: #ffffff;
-  --panel-2: #f0f0f0;
-  --inset: #efefef;
-
-  --border-mid: #c8c8c8;
-
-  --text: #111;
-  --muted: #444;
-  --focus: #2b59ff;
-
-  --chart-bg: #f7f7f7;
-  --chart-grid: rgba(0, 0, 0, 0.18);
-  --chart-axis: rgba(0, 0, 0, 0.55);
-  --chart-text: rgba(0, 0, 0, 0.92);
-  --chart-muted: rgba(0, 0, 0, 0.68);
-
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
@@ -38,27 +16,6 @@
   background: var(--panel);
   container-type: inline-size;
   container-name: dash;
-}
-
-.dashboard-container.theme-dark {
-  --paper: #121212;
-  --bg: #121212;
-  --panel: #1b1b1b;
-  --panel-2: #222;
-  --inset: #101010;
-
-  --text: #f0f0f0;
-  --muted: rgba(255, 255, 255, 0.72);
-
-  --ink: #000;
-  --mint: #2a7f72;
-  --mint-2: #226b60;
-
-  --chart-bg: #101010;
-  --chart-grid: rgba(255, 255, 255, 0.14);
-  --chart-axis: rgba(255, 255, 255, 0.55);
-  --chart-text: rgba(255, 255, 255, 0.92);
-  --chart-muted: rgba(255, 255, 255, 0.72);
 }
 
 .topbar {

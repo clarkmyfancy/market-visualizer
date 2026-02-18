@@ -1,19 +1,15 @@
 /* Label theme */
 .app-subtitle {
-  font-weight: 800;
+  font-weight: var(--font-weight-strong);
   font-size: var(--font-size-chip);
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--subtitle-text);
   cursor: default;
   user-select: text;
 }
 
-.dashboard-container.theme-dark .app-subtitle {
-  color: rgba(255, 255, 255, 0.7);
-}
-
 .chart-title .label {
   color: var(--muted);
-  font-weight: 900;
+  font-weight: var(--font-weight-heavier);
   font-size: var(--font-size-label);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-label);

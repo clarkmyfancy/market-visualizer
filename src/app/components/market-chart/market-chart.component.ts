@@ -95,7 +95,9 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (!series || series.length === 0) return;
 
     const rect = host.getBoundingClientRect();
-    const width = Math.max(320, Math.floor(rect.width || 0));
+
+    // IMPORTANT: don't force a minimum width; respect container width for mobile
+    const width = Math.max(1, Math.floor(rect.width || 0));
     const height = Math.max(240, Math.floor(rect.height || 0));
 
     const margin = { top: 16, right: 24, bottom: 28, left: 56 };
@@ -126,10 +128,10 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       .attr('viewBox', `0 0 ${width} ${height}`);
 
     svg.append('rect')
-    .attr('width', width)
-    .attr('height', height)
-    .attr('fill', tokens.chartBg)
-    .attr('fill', 'var(--chart-bg)');
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', tokens.chartBg)
+      .attr('fill', 'var(--chart-bg)');
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 

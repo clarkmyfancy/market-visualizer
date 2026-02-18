@@ -1,140 +1,156 @@
-.chart {
-  display: grid;
-  gap: var(--s-2);
+/* market-chart.component.scss */
+
+:host {
+  display: block;
+  width: 100%;
 }
 
-/* Top row: left title + right range control */
+/*
+  Container-query based responsive layout:
+  - Desktop: title left, range right
+  - Narrow containers: stack + center, wrap range buttons
+*/
+.chart {
+  width: 100%;
+  box-sizing: border-box;
+
+  /* Enable container queries based on this component's inline size */
+  container-type: inline-size;
+  container-name: chart;
+}
+
 .chart-top {
   display: flex;
-  align-items: baseline;
   justify-content: space-between;
-  gap: var(--s-2);
-  padding: 0 var(--s-1);
-
-  .chart-title {
-    display: flex;
-    gap: var(--s-2);
-    align-items: baseline;
-    min-width: 0;
-
-    .label {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: 0.25px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .value {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: 0.2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap; /* prevents overflow on narrow widths */
+  margin-bottom: 8px;
 }
 
-/* Range segmented control (retro-clean) */
+.chart-title {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.chart-title .label {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.chart-title .value {
+  font-weight: 800;
+  font-size: 14px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .range {
   display: flex;
-  gap: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  gap: 6px;
+  flex-wrap: wrap; /* key: wraps instead of running off-screen */
+  justify-content: flex-end;
   max-width: 100%;
-
-  border-top: 1px solid var(--border-dark);
-  border-left: 1px solid var(--border-dark);
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
-  background: var(--inset);
 }
 
 .range-btn {
   flex: 0 0 auto;
   padding: 5px 8px;
-  background: transparent;
-  color: var(--text);
-  border: 0;
-  border-right: 1px solid var(--border-mid);
-  cursor: pointer;
+  font-size: 12px;
   font-weight: 800;
-  font-size: 11px;
-  letter-spacing: 0.2px;
-  position: relative;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 0;
+  cursor: pointer;
 
-  &:last-child {
-    border-right: 0;
-  }
-
-  &:hover {
-    background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
-  }
+  border-top: 1px solid var(--border-light);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
 
   &:active {
     background: var(--panel-2);
+    border-top: 1px solid var(--border-dark);
+    border-left: 1px solid var(--border-dark);
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
   }
 
   &:focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 
   &.active {
-    background: var(--panel);
+    background: var(--panel-2);
   }
 }
 
-/* Sunken viewport */
 .chart-viewport {
-  /* used by D3 */
-  --chart-bg: var(--inset);
-  --chart-grid: var(--border-mid);
-
   position: relative;
   width: 100%;
-  height: 420px;
+  max-width: 100%;
+  overflow: hidden; /* prevents svg bleed */
+}
 
-  background: var(--inset);
+.svg-host {
+  width: 100%;
+  height: clamp(240px, 45vh, 360px);
+}
 
-  border-top: 1px solid var(--border-dark);
-  border-left: 1px solid var(--border-dark);
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
+/* Overlays */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--panel) 70%, transparent 30%);
+  border-top: 1px solid var(--border-light);
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-dark);
+  pointer-events: none;
+}
 
-  .svg-host {
-    width: 100%;
-    height: 100%;
+.overlay.visible {
+  display: flex;
+}
+
+.overlay.error {
+  background: color-mix(in srgb, #ff0000 10%, var(--panel) 90%);
+}
+
+/*
+  Container query: when the chart container is narrow,
+  stack + center header and center the range buttons.
+*/
+@container chart (max-width: 520px) {
+  .chart-top {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
 
-  .overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
+  .chart-title {
     justify-content: center;
-    text-align: center;
+    width: 100%;
+  }
 
-    background: color-mix(in srgb, var(--bg) 85%, transparent 15%);
-    color: var(--text);
-    font-weight: 800;
-    font-size: 12px;
+  .chart-title .label {
+    display: none; /* simplify on narrow widths */
+  }
 
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.12s ease;
-
-    &.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    &.error {
-      color: #7a0000;
-      padding: 1rem;
-    }
+  .range {
+    justify-content: center;
+    width: 100%;
   }
 }

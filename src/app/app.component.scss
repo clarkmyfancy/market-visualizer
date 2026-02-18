@@ -1,3 +1,5 @@
+/* dashboard.component.scss */
+
 /* Polished retro tokens + spacing */
 .dashboard-container {
   /* spacing scale */
@@ -26,10 +28,11 @@
   font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.15px;
 
-  /* single-window layout */
-  max-width: 1100px;
-  margin: 18px auto;
-  padding: var(--s-3);
+  /* Responsive width WITHOUT media queries */
+  box-sizing: border-box;
+  width: min(1100px, 100%);
+  margin: clamp(0px, 2vh, 18px) auto;
+  padding: clamp(var(--s-2), 2vw, var(--s-3));
 
   /* outer window frame (2px bevel) */
   border-top: 2px solid var(--border-light);
@@ -37,6 +40,10 @@
   border-right: 2px solid var(--border-dark);
   border-bottom: 2px solid var(--border-dark);
   background: var(--panel);
+
+  /* Allow container queries for internal layout decisions if needed */
+  container-type: inline-size;
+  container-name: dash;
 }
 
 /* Dark theme overrides */
@@ -69,28 +76,28 @@
   border-left: 1px solid var(--border-light);
   border-right: 1px solid var(--border-dark);
   border-bottom: 1px solid var(--border-dark);
+}
 
-  .titlebar-left {
-    display: flex;
-    align-items: baseline;
-    gap: var(--s-2);
-    min-width: 0;
-  }
+.titlebar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+}
 
-  .title {
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.25px;
-  }
+.title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+}
 
-  .subtitle {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Toolbar strip */
@@ -162,6 +169,8 @@
   border-bottom: 1px solid var(--border-light);
 
   background: var(--inset);
+
+  width: 100%;
 }
 
 .segmented-btn {
@@ -190,14 +199,13 @@
 
   &:focus-visible {
     outline: 2px solid var(--focus);
-    outline-offset: -2px; /* keep focus inside segmented */
+    outline-offset: -2px;
   }
 
   &.active {
     background: var(--panel);
   }
 
-  /* accent underline, subtle */
   &::after {
     content: "";
     position: absolute;
@@ -210,5 +218,22 @@
 
   &.active::after {
     background: var(--accent-color);
+  }
+}
+
+/* Container query to simplify titlebar on narrow widths (no @media) */
+@container dash (max-width: 640px) {
+  .titlebar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-2);
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  .toolbar {
+    padding: var(--s-1);
   }
 }

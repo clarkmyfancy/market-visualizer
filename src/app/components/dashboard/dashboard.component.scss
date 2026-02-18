@@ -73,14 +73,20 @@
 
 @container dash (max-width: 40rem) {
   .topbar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
     gap: var(--space-2);
   }
 
-  .topbar-left,
+  .topbar-left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .topbar-right {
-    justify-content: space-between;
+    flex: 0 0 auto;
+    margin-left: auto;
+    justify-content: flex-end;
   }
 
   .app-subtitle {

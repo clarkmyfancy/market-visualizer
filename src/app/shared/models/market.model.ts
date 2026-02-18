@@ -18,4 +18,4 @@ export interface CoinGeckoMarketChartResponse {
   total_volumes: [number, number][];
 }
 
-export type TimeRange = 'day' | 'week' | 'month' | 'year' | '2y' | '4y' | '8y' | 'max';
+export type TimeRange = 'week' | 'month' | '3m' | '6m' | 'year' | '2y' | '5y' | 'max';

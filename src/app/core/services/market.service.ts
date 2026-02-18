@@ -40,13 +40,13 @@ export class MarketService {
 
   getRangeOptions(): { value: TimeRange; label: string }[] {
     return [
-      { value: 'day', label: 'Day' },     // last 60 days (per your request)
       { value: 'week', label: 'Week' },
       { value: 'month', label: 'Month' },
+      { value: '3m', label: '3M' },
+      { value: '6m', label: '6M' },
       { value: 'year', label: 'Year' },
       { value: '2y', label: '2Y' },
-      { value: '4y', label: '4Y' },
-      { value: '8y', label: '8Y' },
+      { value: '5y', label: '5Y' },
       { value: 'max', label: 'Max' },
     ];
   }
@@ -132,22 +132,21 @@ export class MarketService {
   }
 
   private mapRangeToCoinGeckoDays(range: TimeRange): string {
-    // Your requirement: "day" should go back last 60 days
     switch (range) {
-      case 'day':
-        return '60';
       case 'week':
         return '7';
       case 'month':
         return '30';
+      case '3m':
+        return '90';
+      case '6m':
+        return '180';
       case 'year':
         return '365';
       case '2y':
         return String(365 * 2);
-      case '4y':
-        return String(365 * 4);
-      case '8y':
-        return String(365 * 8);
+      case '5y':
+        return String(365 * 5);
       case 'max':
         return 'max';
       default:
@@ -167,7 +166,7 @@ export class MarketService {
   private loadRange(): TimeRange {
     try {
       const v = localStorage.getItem('range');
-      const allowed = new Set<TimeRange>(['day', 'week', 'month', 'year', '2y', '4y', '8y', 'max']);
+      const allowed = new Set<TimeRange>(['week', 'month', '3m', '6m', 'year', '2y', '5y', 'max']);
       return allowed.has(v as TimeRange) ? (v as TimeRange) : 'month';
     } catch {
       return 'month';

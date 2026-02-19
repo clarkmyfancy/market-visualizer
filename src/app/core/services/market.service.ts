@@ -3,21 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.model';
+import { ChartLine, ChartPoint } from '../../shared/models/chart.model';
 import { AustinHousingDataService } from './data/austin-housing-data.service';
 import { CryptoMarketDataService } from './data/crypto-market-data.service';
-
-export interface ChartPoint {
-  date: Date;
-  value: number | null;
-}
-
-export interface ChartLine {
-  assetId: string;
-  assetName: string;
-  color: string;
-  strokeStyle: 'solid' | 'dashed';
-  points: ChartPoint[];
-}
 
 @Injectable({ providedIn: 'root' })
 export class MarketService {

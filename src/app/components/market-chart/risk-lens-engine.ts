@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-import { ChartLine } from '../../core/services/market.service';
+import { ChartLine } from '../../shared/models/chart.model';
 
 export type RiskRenderMode = 'price' | 'pct';
 

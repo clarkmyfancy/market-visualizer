@@ -13,10 +13,8 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 
-import {
-  ChartLine,
-  MarketService,
-} from '../../core/services/market.service';
+import { MarketService } from '../../core/services/market.service';
+import { ChartLine } from '../../shared/models/chart.model';
 import { TimeRange } from '../../shared/models/market.model';
 import {
   PATTERN_TYPE_OPTIONS,

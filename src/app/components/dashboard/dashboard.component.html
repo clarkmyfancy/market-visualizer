@@ -2,7 +2,7 @@
   <header class="topbar" aria-label="App chrome">
     <div class="topbar-left">
       <div class="app-title" aria-label="App title">
-        Market Visualizer
+        MarketLens
       </div>
       <div class="app-subtitle" aria-label="Subtitle">
         Multi-Asset Performance
@@ -14,7 +14,7 @@
         <span class="experiment-label">Experiments</span>
         <select
           #experimentSelect
-          class="experiment-select"
+          class="experiment-select paper-select"
           [value]="experimentMode()"
           (change)="setExperimentMode(experimentSelect.value)">
           <option value="core">Core (Default)</option>

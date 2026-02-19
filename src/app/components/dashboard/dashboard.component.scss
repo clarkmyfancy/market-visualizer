@@ -34,9 +34,16 @@
 .topbar-left,
 .topbar-right {
   display: flex;
-  align-items: baseline;
   gap: var(--space-2);
   min-width: 0;
+}
+
+.topbar-left {
+  align-items: baseline;
+}
+
+.topbar-right {
+  align-items: center;
 }
 
 .experiment-field {
@@ -52,19 +59,10 @@
 }
 
 .experiment-select {
-  min-width: 10rem;
-  padding: var(--space-1) var(--space-2);
-  border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
-  background: var(--panel);
-  color: var(--text);
-  font-weight: var(--font-weight-black);
-  font-size: var(--font-size-chip);
-}
-
-.experiment-select:focus-visible {
-  outline: var(--line-thin) solid var(--focus, var(--accent));
-  outline-offset: var(--shadow-offset-sm);
+  min-width: 10.25rem;
+  min-height: calc(var(--font-size-chip) * 1.2 + var(--space-2) * 2 + var(--line-thick) * 2);
+  height: calc(var(--font-size-chip) * 1.2 + var(--space-2) * 2 + var(--line-thick) * 2);
+  line-height: 1.2;
 }
 
 .workbar {

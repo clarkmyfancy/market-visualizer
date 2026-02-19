@@ -32,6 +32,9 @@
   --chart-axis: rgba(0, 0, 0, 0.55);
   --chart-text: rgba(0, 0, 0, 0.92);
   --chart-muted: rgba(0, 0, 0, 0.68);
+  --risk-mean-color: #0f8d7a;
+  --risk-stress-color: #cf3f32;
+  --risk-drawdown-color: #6b5dd3;
 
   --color-danger: #ff0000;
   --surface-sunken: #ededed;
@@ -108,6 +111,9 @@
   --chart-axis: rgba(255, 255, 255, 0.55);
   --chart-text: rgba(255, 255, 255, 0.92);
   --chart-muted: rgba(255, 255, 255, 0.72);
+  --risk-mean-color: #2ad6bc;
+  --risk-stress-color: #ff7a6c;
+  --risk-drawdown-color: #a59bff;
 }
 
 html,

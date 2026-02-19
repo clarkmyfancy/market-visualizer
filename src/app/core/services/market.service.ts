@@ -1,16 +1,17 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
+import { ChartLine } from '../../shared/models/chart.model';
 import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.model';
-import { ChartLine, ChartPoint } from '../../shared/models/chart.model';
-import { AustinHousingDataService } from './data/austin-housing-data.service';
-import { CryptoMarketDataService } from './data/crypto-market-data.service';
+import { CompareSeriesUseCase } from './use-cases/compare-series.use-case';
+import { LoadSeriesUseCase } from './use-cases/load-series.use-case';
+import { RangePolicyService } from './use-cases/range-policy.service';
 
 @Injectable({ providedIn: 'root' })
-export class MarketService {
-  private readonly cryptoData = inject(CryptoMarketDataService);
-  private readonly housingData = inject(AustinHousingDataService);
+export class MarketFacade {
+  private readonly compareSeries = inject(CompareSeriesUseCase);
+  private readonly loadSeries = inject(LoadSeriesUseCase);
+  private readonly rangePolicy = inject(RangePolicyService);
 
   private readonly availableAssets: MarketAsset[] = [
     { id: 'bitcoin', name: 'Bitcoin', category: 'crypto', color: '#f7931a' },
@@ -18,17 +19,6 @@ export class MarketService {
     { id: 'tether-gold', name: 'Gold', category: 'crypto', color: '#d4af37' },
     { id: 'austin-real-estate', name: 'Austin Housing', category: 'real-estate', color: '#22c55e' },
   ];
-  private readonly rangeOptions: { value: TimeRange; label: string }[] = [
-    { value: 'week', label: 'Week' },
-    { value: 'month', label: 'Month' },
-    { value: '3m', label: '3M' },
-    { value: '6m', label: '6M' },
-    { value: 'year', label: 'Year' },
-    { value: '2y', label: '2Y' },
-    { value: '5y', label: '5Y' },
-    { value: 'max', label: 'Max' },
-  ];
-  private readonly compareCryptoBlockedRanges = new Set<TimeRange>(['2y', '5y', 'max']);
 
   readonly selectedAsset = signal<MarketAsset | null>(null);
   readonly series = signal<DataPoint[]>([]);
@@ -79,14 +69,11 @@ export class MarketService {
 
     if (!primaryFullSeries?.length || !secondaryFullSeries?.length) return [];
 
-    const aligned = this.alignSeriesWithStepHold(primaryFullSeries, secondaryFullSeries);
-    const visibleAligned = this.filterAlignedSeriesByRange(
-      aligned.primary,
-      aligned.secondary,
+    const normalized = this.compareSeries.buildNormalizedCompareSeries(
+      primaryFullSeries,
+      secondaryFullSeries,
       this.range()
     );
-    const normalizedPrimary = this.normalizeSeriesToPercentChange(visibleAligned.primary);
-    const normalizedSecondary = this.normalizeSeriesToPercentChange(visibleAligned.secondary);
 
     return [
       {
@@ -94,14 +81,14 @@ export class MarketService {
         assetName: primaryAsset.name,
         color: primaryAsset.color,
         strokeStyle: 'solid',
-        points: normalizedPrimary,
+        points: normalized.primary,
       },
       {
         assetId: secondaryAsset.id,
         assetName: secondaryAsset.name,
         color: secondaryAsset.color,
         strokeStyle: 'dashed',
-        points: normalizedSecondary,
+        points: normalized.secondary,
       },
     ];
   });
@@ -128,15 +115,15 @@ export class MarketService {
   }
 
   getRangeOptions(): { value: TimeRange; label: string }[] {
-    return this.rangeOptions;
+    return this.rangePolicy.getRangeOptions();
   }
 
   getVisibleRangeOptions(): { value: TimeRange; label: string }[] {
-    if (!this.shouldLimitRangesForCryptoCompare()) {
-      return this.rangeOptions;
-    }
-
-    return this.rangeOptions.filter((option) => !this.compareCryptoBlockedRanges.has(option.value));
+    return this.rangePolicy.getVisibleRangeOptions(
+      this.compareEnabled(),
+      this.selectedAsset(),
+      this.getSecondaryAsset()
+    );
   }
 
   setCompareEnabled(enabled: boolean): void {
@@ -176,7 +163,15 @@ export class MarketService {
 
   setRange(range: TimeRange): void {
     const asset = this.selectedAsset();
-    const effectiveRange = asset ? this.normalizeRangeForContext(asset, range) : range;
+    const secondaryAsset = this.getSecondaryAsset();
+    const effectiveRange = asset
+      ? this.rangePolicy.normalizeRangeForContext(
+          this.compareEnabled(),
+          asset,
+          secondaryAsset,
+          range
+        )
+      : range;
 
     this.range.set(effectiveRange);
     this.saveRange(effectiveRange);
@@ -196,7 +191,12 @@ export class MarketService {
       void this.preloadCompareSeries();
     }
 
-    const effectiveRange = this.normalizeRangeForContext(asset, this.range());
+    const effectiveRange = this.rangePolicy.normalizeRangeForContext(
+      this.compareEnabled(),
+      asset,
+      this.getSecondaryAsset(),
+      this.range()
+    );
     if (effectiveRange !== this.range()) {
       this.range.set(effectiveRange);
       this.saveRange(effectiveRange);
@@ -266,7 +266,7 @@ export class MarketService {
 
     this.markFullSeriesLoading(asset.id, true);
 
-    const request = this.loadFullSeriesForAsset(asset)
+    const request = this.loadSeries.loadFullSeries(asset)
       .then((points) => {
         const sanitized = this.sanitizeSeries(points);
 
@@ -299,19 +299,6 @@ export class MarketService {
     });
   }
 
-  private async loadFullSeriesForAsset(asset: MarketAsset): Promise<DataPoint[]> {
-    if (asset.category === 'crypto') {
-      return firstValueFrom(this.cryptoData.loadSeries(asset.id, 'year'));
-    }
-
-    if (asset.category === 'real-estate' && asset.id === 'austin-real-estate') {
-      const result = await this.housingData.loadSeries('max');
-      return result.points;
-    }
-
-    throw new Error(`No full-series data source is wired for "${asset.name}".`);
-  }
-
   private sanitizeSeries(series: DataPoint[]): DataPoint[] {
     const sorted = [...series]
       .filter(
@@ -338,113 +325,14 @@ export class MarketService {
     return deduped;
   }
 
-  private alignSeriesWithStepHold(
-    primarySeries: DataPoint[],
-    secondarySeries: DataPoint[]
-  ): { primary: ChartPoint[]; secondary: ChartPoint[] } {
-    const allTimestamps = new Set<number>();
-
-    for (const point of primarySeries) {
-      allTimestamps.add(point.date.getTime());
-    }
-
-    for (const point of secondarySeries) {
-      allTimestamps.add(point.date.getTime());
-    }
-
-    const sortedTimestamps = Array.from(allTimestamps.values()).sort((a, b) => a - b);
-
-    const alignedPrimary: ChartPoint[] = [];
-    const alignedSecondary: ChartPoint[] = [];
-
-    let primaryIndex = 0;
-    let secondaryIndex = 0;
-    let latestPrimary: number | null = null;
-    let latestSecondary: number | null = null;
-
-    for (const timestamp of sortedTimestamps) {
-      while (
-        primaryIndex < primarySeries.length &&
-        primarySeries[primaryIndex].date.getTime() <= timestamp
-      ) {
-        latestPrimary = primarySeries[primaryIndex].value;
-        primaryIndex += 1;
-      }
-
-      while (
-        secondaryIndex < secondarySeries.length &&
-        secondarySeries[secondaryIndex].date.getTime() <= timestamp
-      ) {
-        latestSecondary = secondarySeries[secondaryIndex].value;
-        secondaryIndex += 1;
-      }
-
-      const date = new Date(timestamp);
-      alignedPrimary.push({ date, value: latestPrimary });
-      alignedSecondary.push({ date, value: latestSecondary });
-    }
-
-    return { primary: alignedPrimary, secondary: alignedSecondary };
-  }
-
-  private normalizeSeriesToPercentChange(series: ChartPoint[]): ChartPoint[] {
-    const basePoint = series.find(
-      (point) => point.value != null && Number.isFinite(point.value)
-    );
-    const baseValue = basePoint?.value;
-
-    if (!Number.isFinite(baseValue) || baseValue === 0) {
-      return series.map((point) => ({ date: point.date, value: null }));
-    }
-
-    return series.map((point) => {
-      if (point.value == null || !Number.isFinite(point.value)) {
-        return { date: point.date, value: null };
-      }
-
-      const normalized = ((point.value / baseValue) - 1) * 100;
-
-      return {
-        date: point.date,
-        value: Number.isFinite(normalized) ? normalized : null,
-      };
-    });
-  }
-
-  private filterAlignedSeriesByRange(
-    primary: ChartPoint[],
-    secondary: ChartPoint[],
-    range: TimeRange
-  ): { primary: ChartPoint[]; secondary: ChartPoint[] } {
-    if (!primary.length || !secondary.length) {
-      return { primary: [], secondary: [] };
-    }
-
-    if (range === 'max') {
-      return { primary, secondary };
-    }
-
-    const latest = primary[primary.length - 1].date.getTime();
-    const days = this.mapRangeToDays(range);
-    const cutoff = latest - days * 24 * 60 * 60 * 1000;
-
-    const firstVisibleIndex = primary.findIndex((point) => point.date.getTime() >= cutoff);
-    if (firstVisibleIndex === -1) {
-      return {
-        primary: primary.slice(-1),
-        secondary: secondary.slice(-1),
-      };
-    }
-
-    return {
-      primary: primary.slice(firstVisibleIndex),
-      secondary: secondary.slice(firstVisibleIndex),
-    };
-  }
-
   private fetchForAsset(asset: MarketAsset, range: TimeRange): void {
     const requestToken = this.nextRequestToken();
-    const effectiveRange = this.normalizeRangeForAsset(asset, range);
+    const effectiveRange = this.rangePolicy.normalizeRangeForContext(
+      this.compareEnabled(),
+      asset,
+      this.getSecondaryAsset(),
+      range
+    );
     const cacheKey = `${asset.id}::${effectiveRange}`;
     const cached = this.seriesCache.get(cacheKey);
     if (cached && cached.length > 0) {
@@ -459,32 +347,9 @@ export class MarketService {
     this.isLoading.set(true);
 
     if (asset.category === 'crypto') {
-      this.fetchCryptoSeries(asset.id, effectiveRange, cacheKey, requestToken);
-      return;
-    }
-
-    if (asset.category === 'real-estate' && asset.id === 'austin-real-estate') {
-      this.fetchAustinHousingSeries(effectiveRange, cacheKey, requestToken);
-      return;
-    }
-
-    if (!this.isRequestActive(requestToken)) return;
-    this.error.set(`No data source wired up yet for category "${asset.category}".`);
-    this.finishRequest(requestToken);
-  }
-
-  private fetchCryptoSeries(
-    coinId: string,
-    range: TimeRange,
-    cacheKey: string,
-    requestToken: number
-  ): void {
-    this.cryptoData
-      .loadSeries(coinId, range)
-      .subscribe({
+      this.loadSeries.loadCryptoSeries(asset.id, effectiveRange).subscribe({
         next: (points) => {
           if (!this.isRequestActive(requestToken)) return;
-
           this.series.set(points);
 
           if (points.length > 0) {
@@ -493,7 +358,6 @@ export class MarketService {
         },
         error: (err: unknown) => {
           if (!this.isRequestActive(requestToken)) return;
-
           this.error.set(this.toUserError(err));
           this.finishRequest(requestToken);
         },
@@ -501,34 +365,37 @@ export class MarketService {
           this.finishRequest(requestToken);
         },
       });
-  }
+      return;
+    }
 
-  private fetchAustinHousingSeries(
-    range: TimeRange,
-    cacheKey: string,
-    requestToken: number
-  ): void {
-    this.housingData
-      .loadSeries(range)
-      .then((result) => {
-        if (!this.isRequestActive(requestToken)) return;
+    if (asset.category === 'real-estate' && asset.id === 'austin-real-estate') {
+      this.loadSeries.loadHousingSeries(effectiveRange)
+        .then((result) => {
+          if (!this.isRequestActive(requestToken)) return;
 
-        const points = this.filterSeriesByRange(result.points, range);
-        if (points.length === 0) {
-          throw new Error('No Austin housing price points found in source data.');
-        }
+          const points = result.points;
+          if (result.metricLabel) {
+            this.austinMetricLabel.set(result.metricLabel);
+          }
 
-        this.austinMetricLabel.set(result.metricLabel);
-        this.seriesCache.set(cacheKey, points);
-        this.series.set(points);
-      })
-      .catch((err: unknown) => {
-        if (!this.isRequestActive(requestToken)) return;
-        this.error.set(this.toAustinHousingError(err));
-      })
-      .finally(() => {
-        this.finishRequest(requestToken);
-      });
+          this.series.set(points);
+          if (points.length > 0) {
+            this.seriesCache.set(cacheKey, points);
+          }
+        })
+        .catch((err: unknown) => {
+          if (!this.isRequestActive(requestToken)) return;
+          this.error.set(this.toAustinHousingError(err));
+        })
+        .finally(() => {
+          this.finishRequest(requestToken);
+        });
+      return;
+    }
+
+    if (!this.isRequestActive(requestToken)) return;
+    this.error.set(`No data source wired up yet for category "${asset.category}".`);
+    this.finishRequest(requestToken);
   }
 
   private nextRequestToken(): number {
@@ -545,66 +412,17 @@ export class MarketService {
     this.isLoading.set(false);
   }
 
-  private filterSeriesByRange(series: DataPoint[], range: TimeRange): DataPoint[] {
-    if (!series.length) return [];
-    if (range === 'max') return series;
-
-    const latest = series[series.length - 1]?.date.getTime();
-    if (!latest) return series;
-
-    const days = this.mapRangeToDays(range);
-    const cutoff = latest - days * 24 * 60 * 60 * 1000;
-
-    const filtered = series.filter((point) => point.date.getTime() >= cutoff);
-    return filtered.length > 0 ? filtered : series.slice(-1);
-  }
-
-  private mapRangeToDays(range: TimeRange): number {
-    switch (range) {
-      case 'week':
-        return 7;
-      case 'month':
-        return 30;
-      case '3m':
-        return 90;
-      case '6m':
-        return 180;
-      case 'year':
-        return 365;
-      case '2y':
-        return 365 * 2;
-      case '5y':
-        return 365 * 5;
-      case 'max':
-      default:
-        return Number.MAX_SAFE_INTEGER;
-    }
-  }
-
-  private normalizeRangeForAsset(asset: MarketAsset, range: TimeRange): TimeRange {
-    if (asset.id === 'austin-real-estate' && (range === 'week' || range === 'month')) {
-      return '3m';
-    }
-
-    return range;
-  }
-
-  private normalizeRangeForContext(asset: MarketAsset, range: TimeRange): TimeRange {
-    const assetAdjusted = this.normalizeRangeForAsset(asset, range);
-
-    if (this.shouldLimitRangesForCryptoCompare() && this.compareCryptoBlockedRanges.has(assetAdjusted)) {
-      return 'year';
-    }
-
-    return assetAdjusted;
-  }
-
   private enforceRangeForCurrentContext(fetchPrimarySeries: boolean): void {
     const primaryAsset = this.selectedAsset();
     if (!primaryAsset) return;
 
     const currentRange = this.range();
-    const effectiveRange = this.normalizeRangeForContext(primaryAsset, currentRange);
+    const effectiveRange = this.rangePolicy.normalizeRangeForContext(
+      this.compareEnabled(),
+      primaryAsset,
+      this.getSecondaryAsset(),
+      currentRange
+    );
 
     if (effectiveRange === currentRange) return;
 
@@ -614,17 +432,6 @@ export class MarketService {
     if (fetchPrimarySeries) {
       this.fetchForAsset(primaryAsset, effectiveRange);
     }
-  }
-
-  private shouldLimitRangesForCryptoCompare(): boolean {
-    if (!this.compareEnabled()) return false;
-
-    const primaryAsset = this.selectedAsset();
-    if (!primaryAsset) return false;
-    if (primaryAsset.category === 'crypto') return true;
-
-    const secondaryAsset = this.getSecondaryAsset();
-    return secondaryAsset?.category === 'crypto';
   }
 
   private loadRange(): TimeRange {
@@ -682,3 +489,5 @@ export class MarketService {
     return `HTTP ${err.status}: ${err.message || 'Request failed.'}`;
   }
 }
+
+export { MarketFacade as MarketService };

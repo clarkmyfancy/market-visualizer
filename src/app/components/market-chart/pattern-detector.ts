@@ -1,5 +1,15 @@
 import * as d3 from 'd3';
 
+import { getPatternNarrative } from './pattern-detector.explanations';
+import {
+  clampStrength,
+  computeRsiSeries,
+  computeStepReturns,
+  percentileRank,
+  rollingStdSeries,
+  simpleMovingAverageSeries,
+} from './pattern-detector.math';
+
 export type PatternSignalType = 'momentum' | 'meanReversion' | 'volatility' | 'trend' | 'pattern';
 export type PatternSensitivity = 'conservative' | 'normal' | 'sensitive';
 export type PatternSortMode = 'recency' | 'strength';
@@ -135,6 +145,7 @@ function detectMovingAverageCrossSignals(
     const direction: PatternDirection = bullishCross ? 'bullish' : 'bearish';
     const signalDate = points[i].date;
     const crossoverType = bullishCross ? 'Golden cross' : 'Death cross';
+    const narrative = getPatternNarrative('movingAverageCrossover');
 
     signals.push({
       id: `ma-${signalDate.getTime()}-${direction}-${shortLength}-${longLength}`,
@@ -150,15 +161,8 @@ function detectMovingAverageCrossSignals(
         shortLength,
         longLength,
       },
-      explanations: [
-        'Systematic strategies and trend-followers use moving averages, causing clustered buying/selling when a crossover happens.',
-        'Moving averages summarize recent consensus; crossing often reflects a real regime shift in momentum.',
-        'Risk managers and allocators adjust exposure when longer-term trends change, reinforcing the move.',
-      ],
-      interpretation: [
-        'This signal is often associated with trend transitions rather than immediate reversals.',
-        'Historically it tends to coincide with persistent momentum when the spread keeps widening after the cross.',
-      ],
+      explanations: narrative.explanations,
+      interpretation: narrative.interpretation,
       chartAnnotation: {
         date: signalDate,
         value: points[i].value,
@@ -220,6 +224,7 @@ function detectRsiSignals(points: AnalysisPoint[], sensitivity: PatternSensitivi
     const distance = oversold ? thresholds.lower - current : current - thresholds.upper;
     const strength = clampStrength(30 + (distance / Math.max(1, threshold)) * 200);
     const signalDate = points[i].date;
+    const narrative = getPatternNarrative('rsiExtremes');
 
     signals.push({
       id: `rsi-${signalDate.getTime()}-${direction}`,
@@ -234,15 +239,8 @@ function detectRsiSignals(points: AnalysisPoint[], sensitivity: PatternSensitivi
         threshold,
         length: 14,
       },
-      explanations: [
-        'Sharp moves exhaust marginal buyers/sellers; mean reversion can occur as participants take profits or cover.',
-        'Behavioral overreaction and recency bias can push price too far relative to recent pace.',
-        'Short-term liquidity imbalances (panic selling or forced selling) can drive RSI extremes.',
-      ],
-      interpretation: [
-        'This is often associated with stretched conditions, not a guaranteed reversal.',
-        'Historically it tends to coincide with elevated two-way volatility around the extreme zone.',
-      ],
+      explanations: narrative.explanations,
+      interpretation: narrative.interpretation,
       chartAnnotation: {
         date: signalDate,
         value: points[i].value,
@@ -299,6 +297,7 @@ function detectBollingerSignals(
     const direction: PatternDirection = 'neutral';
     const signalDate = points[i].date;
     const percentilePct = percentile * 100;
+    const narrative = getPatternNarrative('bollingerRegime');
     const strength = isSqueeze
       ? clampStrength(35 + ((lowThreshold - percentile) / Math.max(0.02, lowThreshold)) * 100)
       : clampStrength(
@@ -319,15 +318,8 @@ function detectBollingerSignals(
         bandWidth: Number(currentWidth.toFixed(4)),
         percentile: Number(percentilePct.toFixed(1)),
       },
-      explanations: [
-        'Markets alternate between consolidation (low volatility) and repricing (breakouts) as information arrives and positions reset.',
-        'Low volatility often reflects temporary agreement or lack of catalysts; once triggered, stops and breakout orders can create expansion.',
-        'Option hedging and volatility targeting can amplify transitions from calm to volatile conditions.',
-      ],
-      interpretation: [
-        'Squeezes are often associated with compressed risk that can resolve with larger directional moves.',
-        'Expansions tend to coincide with repricing phases, but direction still depends on broader context.',
-      ],
+      explanations: narrative.explanations,
+      interpretation: narrative.interpretation,
       chartAnnotation: {
         date: signalDate,
         value: points[i].value,
@@ -379,6 +371,7 @@ function detectRangeBreakoutSignals(
     const moveRatio = bullish ? upDistance / Math.max(requiredMove, 1e-6) : downDistance / Math.max(requiredMove, 1e-6);
     const strength = clampStrength(40 + moveRatio * 26);
     const signalDate = points[i].date;
+    const narrative = getPatternNarrative('rangeBreakout');
 
     signals.push({
       id: `range-${signalDate.getTime()}-${direction}-${lookback}`,
@@ -396,15 +389,8 @@ function detectRangeBreakoutSignals(
         rangeLow: Number(low.toFixed(3)),
         breakoutDistance: Number((bullish ? upDistance : downDistance).toFixed(3)),
       },
-      explanations: [
-        'Support/resistance zones form because traders anchor to prior highs/lows and place orders there.',
-        'Breakouts trigger stop orders and momentum entries, creating one-directional flows.',
-        'A break often signals new information or a shift in supply/demand balance.',
-      ],
-      interpretation: [
-        'Range breaks are often associated with regime transitions, especially after prolonged consolidation.',
-        'Historically this can coincide with follow-through when price remains outside the prior range.',
-      ],
+      explanations: narrative.explanations,
+      interpretation: narrative.interpretation,
       chartAnnotation: {
         date: signalDate,
         value: current,
@@ -460,6 +446,7 @@ function detectVolatilitySpikeSignals(
         Math.max(0, (jumpRatio - 1) * 30)
     );
     const signalDate = points[i].date;
+    const narrative = getPatternNarrative('volatilitySpike');
 
     signals.push({
       id: `vol-${signalDate.getTime()}`,
@@ -474,15 +461,8 @@ function detectVolatilitySpikeSignals(
         jumpRatio: Number(jumpRatio.toFixed(2)),
         volatility: Number(currentVol.toFixed(4)),
       },
-      explanations: [
-        'Deleveraging and risk-limit breaches can force selling, increasing realized volatility.',
-        'Uncertainty shocks widen spreads and reduce liquidity, magnifying moves.',
-        'Volatility-targeting funds adjust exposure mechanically, which can reinforce spikes.',
-      ],
-      interpretation: [
-        'Volatility spikes often coincide with unstable liquidity and larger intraperiod swings.',
-        'Historically these regimes can persist briefly before normalizing, so position sizing matters more than direction calls.',
-      ],
+      explanations: narrative.explanations,
+      interpretation: narrative.interpretation,
       chartAnnotation: {
         date: signalDate,
         value: points[i].value,
@@ -492,111 +472,4 @@ function detectVolatilitySpikeSignals(
   }
 
   return signals;
-}
-
-function computeStepReturns(values: number[]): Array<number | null> {
-  const returns: Array<number | null> = [null];
-
-  for (let i = 1; i < values.length; i += 1) {
-    const previous = values[i - 1];
-    const current = values[i];
-
-    if (!Number.isFinite(previous) || !Number.isFinite(current)) {
-      returns.push(null);
-      continue;
-    }
-
-    const denominator = Math.max(1e-6, Math.abs(previous));
-    returns.push((current - previous) / denominator);
-  }
-
-  return returns;
-}
-
-function simpleMovingAverageSeries(values: number[], window: number): Array<number | null> {
-  const result: Array<number | null> = Array(values.length).fill(null);
-  if (window <= 0) return result;
-
-  let rollingSum = 0;
-  for (let i = 0; i < values.length; i += 1) {
-    rollingSum += values[i];
-    if (i >= window) {
-      rollingSum -= values[i - window];
-    }
-
-    if (i >= window - 1) {
-      result[i] = rollingSum / window;
-    }
-  }
-
-  return result;
-}
-
-function rollingStdSeries(values: number[], window: number): Array<number | null> {
-  const result: Array<number | null> = Array(values.length).fill(null);
-  if (window <= 1) return result;
-
-  for (let i = window - 1; i < values.length; i += 1) {
-    const slice = values.slice(i - window + 1, i + 1);
-    if (slice.some((value) => !Number.isFinite(value))) continue;
-
-    const mean = d3.mean(slice);
-    if (mean == null) continue;
-
-    const variance = d3.mean(slice, (value) => (value - mean) ** 2) ?? 0;
-    result[i] = Math.sqrt(Math.max(0, variance));
-  }
-
-  return result;
-}
-
-function computeRsiSeries(values: number[], length: number): Array<number | null> {
-  const rsi: Array<number | null> = Array(values.length).fill(null);
-  if (values.length <= length) return rsi;
-
-  let gains = 0;
-  let losses = 0;
-  for (let i = 1; i <= length; i += 1) {
-    const delta = values[i] - values[i - 1];
-    gains += Math.max(0, delta);
-    losses += Math.max(0, -delta);
-  }
-
-  let avgGain = gains / length;
-  let avgLoss = losses / length;
-  rsi[length] = computeRsiFromAverages(avgGain, avgLoss);
-
-  for (let i = length + 1; i < values.length; i += 1) {
-    const delta = values[i] - values[i - 1];
-    const gain = Math.max(0, delta);
-    const loss = Math.max(0, -delta);
-
-    avgGain = ((avgGain * (length - 1)) + gain) / length;
-    avgLoss = ((avgLoss * (length - 1)) + loss) / length;
-    rsi[i] = computeRsiFromAverages(avgGain, avgLoss);
-  }
-
-  return rsi;
-}
-
-function computeRsiFromAverages(avgGain: number, avgLoss: number): number {
-  if (avgLoss === 0 && avgGain === 0) return 50;
-  if (avgLoss === 0) return 100;
-
-  const rs = avgGain / avgLoss;
-  return 100 - (100 / (1 + rs));
-}
-
-function percentileRank(values: number[], current: number): number {
-  if (!values.length) return 0;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  if (sorted.length === 1) return 1;
-
-  const idx = d3.bisectRight(sorted, current) - 1;
-  return Math.max(0, Math.min(1, idx / (sorted.length - 1)));
-}
-
-function clampStrength(rawScore: number): number {
-  return Math.max(0, Math.min(100, rawScore));
 }

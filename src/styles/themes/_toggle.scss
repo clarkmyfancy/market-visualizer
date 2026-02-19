@@ -1,0 +1,100 @@
+/* Flapper-style two-state toggle */
+
+.paper-flapper-toggle {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(3.9rem, auto));
+  gap: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.paper-flapper-toggle::before {
+  /* Center seam / divot for the flapper look */
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 8px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--shadow-ink) 45%, transparent 55%) 0%,
+    color-mix(in srgb, var(--panel-2) 84%, var(--inset) 16%) 45%,
+    color-mix(in srgb, var(--shadow-ink) 40%, transparent 60%) 100%
+  );
+  border-left: 1px solid color-mix(in srgb, var(--shadow-ink) 35%, transparent 65%);
+  border-right: 1px solid color-mix(in srgb, var(--border-light) 45%, transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.paper-flapper-option {
+  position: relative;
+  z-index: 1;
+  min-height: calc(var(--font-size-chip) + var(--space-1) * 2 + var(--line-thin) * 2);
+  padding: calc(var(--space-1) - 1px) var(--space-2);
+  border: var(--line-thin) solid var(--ink);
+  background: color-mix(in srgb, var(--panel) 92%, var(--inset) 8%);
+  color: var(--text);
+  font-size: calc(var(--font-size-chip) - 1px);
+  font-weight: var(--font-weight-black);
+  letter-spacing: var(--letter-spacing-chip);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+
+.paper-flapper-option.left {
+  box-shadow: 2px 2px 0 0 var(--shadow-ink);
+}
+
+.paper-flapper-option.right {
+  box-shadow: -2px 2px 0 0 var(--shadow-ink);
+}
+
+.paper-flapper-option:not(.active):not(:disabled):hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--shadow-ink);
+  background: color-mix(in srgb, var(--panel) 84%, var(--mint) 16%);
+}
+
+.paper-flapper-option.right:not(.active):not(:disabled):hover {
+  box-shadow: -3px 3px 0 0 var(--shadow-ink);
+}
+
+.paper-flapper-option.active {
+  transform: translate(var(--shadow-press-translate), var(--shadow-press-translate));
+  box-shadow: none;
+  background: color-mix(in srgb, var(--panel-2) 92%, var(--inset) 8%);
+}
+
+.paper-flapper-option.active:hover,
+.paper-flapper-option.active:active {
+  transform: translate(var(--shadow-press-translate), var(--shadow-press-translate));
+  box-shadow: none;
+}
+
+.paper-flapper-option:focus-visible {
+  outline: var(--line-thin) solid var(--focus, var(--accent));
+  outline-offset: 1px;
+}
+
+.paper-flapper-option:disabled {
+  cursor: not-allowed;
+}
+
+.paper-flapper-toggle.is-disabled {
+  opacity: 0.86;
+}
+
+.paper-flapper-toggle.is-disabled .paper-flapper-option:not(.active) {
+  opacity: 0.72;
+  box-shadow: none;
+}

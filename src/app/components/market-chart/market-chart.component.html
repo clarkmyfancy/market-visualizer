@@ -194,6 +194,33 @@
   }
 
   <div class="chart-viewport">
+    <div
+      class="y-axis-toggle"
+      role="group"
+      aria-label="Main chart Y-axis mode">
+      <div
+        class="paper-flapper-toggle"
+        [class.is-disabled]="marketService.compareEnabled()"
+        [attr.aria-disabled]="marketService.compareEnabled()">
+        <button
+          type="button"
+          class="paper-flapper-option left"
+          [class.active]="selectedAxisRenderMode() === 'price'"
+          [disabled]="marketService.compareEnabled()"
+          (click)="setAxisRenderMode('price')">
+          Price
+        </button>
+        <button
+          type="button"
+          class="paper-flapper-option right"
+          [class.active]="selectedAxisRenderMode() === 'pct'"
+          [disabled]="marketService.compareEnabled()"
+          (click)="setAxisRenderMode('pct')">
+          % Change
+        </button>
+      </div>
+    </div>
+
     @if (hoverInfo(); as info) {
       <div class="hover-info" aria-live="polite">
         <span class="hover-date">{{ hoverDateLabel() }}</span>

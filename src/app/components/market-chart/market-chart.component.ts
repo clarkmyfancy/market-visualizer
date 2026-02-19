@@ -113,6 +113,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   ]);
   readonly selectedPatternSignalId = signal<string | null>(null);
   readonly riskLensEnabled = signal(true);
+  readonly axisRenderMode = signal<RenderMode>('price');
   readonly showMeanBands = signal(true);
   readonly showStressMarkers = signal(true);
   readonly showDrawdown = signal(true);
@@ -301,6 +302,15 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.marketService.setSecondaryAsset(assetId);
   }
 
+  setAxisRenderMode(mode: RenderMode): void {
+    if (this.marketService.compareEnabled()) return;
+    this.axisRenderMode.set(mode);
+  }
+
+  selectedAxisRenderMode(): RenderMode {
+    return this.marketService.compareEnabled() ? 'pct' : this.axisRenderMode();
+  }
+
   setMeanBandsEnabled(enabled: boolean): void {
     this.showMeanBands.set(enabled);
   }
@@ -456,7 +466,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   }
 
   private currentRenderMode(): RenderMode {
-    return this.marketService.compareEnabled() ? 'pct' : 'price';
+    return this.selectedAxisRenderMode();
   }
 
   private installThemeObservers(): void {
@@ -548,12 +558,13 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const host = this.chartContainer?.nativeElement;
     if (!host) return;
 
+    const renderLines = this.toRenderLines(lines, mode);
     const tokens = this.readThemeTokens();
     const riskLensEnabled = this.riskLensEnabled();
 
     renderMarketChart({
       host,
-      lines,
+      lines: renderLines,
       mode,
       tokens,
       compareEnabled: this.marketService.compareEnabled(),
@@ -565,6 +576,37 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       selectedPatternSignalId: this.selectedPatternSignalId(),
       formatPatternSignalDate: (signal) => this.formatPatternSignalDate(signal),
       onHoverChange: (info) => this.hoverInfo.set(info),
+    });
+  }
+
+  private toRenderLines(lines: ReturnType<MarketService['chartLines']>, mode: RenderMode): ReturnType<MarketService['chartLines']> {
+    if (mode !== 'pct' || this.marketService.compareEnabled()) {
+      return lines;
+    }
+
+    return lines.map((line) => ({
+      ...line,
+      points: this.normalizePointsToPercent(line.points),
+    }));
+  }
+
+  private normalizePointsToPercent(
+    points: Array<{ date: Date; value: number | null }>
+  ): Array<{ date: Date; value: number | null }> {
+    const basePoint = points.find((point) => point.value != null && Number.isFinite(point.value));
+    const baseValue = basePoint?.value;
+
+    if (!Number.isFinite(baseValue) || baseValue === 0) {
+      return points.map((point) => ({ date: point.date, value: null }));
+    }
+
+    return points.map((point) => {
+      if (point.value == null || !Number.isFinite(point.value)) {
+        return { date: point.date, value: null };
+      }
+
+      const normalized = ((point.value / baseValue) - 1) * 100;
+      return { date: point.date, value: Number.isFinite(normalized) ? normalized : null };
     });
   }
 

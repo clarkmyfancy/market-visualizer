@@ -207,6 +207,14 @@
   background: var(--chart-bg);
 }
 
+.y-axis-toggle {
+  position: absolute;
+  /* Match the rendered plot's inner top/left margins so it hugs the y-axis corner */
+  top: 16px;
+  left: 62px;
+  z-index: 3;
+}
+
 .hover-info {
   position: absolute;
   top: var(--space-2);
@@ -507,6 +515,11 @@
 }
 
 @container chart (max-width: 35rem) {
+  .y-axis-toggle {
+    top: 16px;
+    left: 56px;
+  }
+
   .chart-top {
     flex-direction: column;
     align-items: stretch;

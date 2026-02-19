@@ -28,6 +28,16 @@ import {
   type PatternSortMode,
   type PatternTypeOption,
 } from './pattern-detector';
+import {
+  computeDrawdownSeries,
+  computeMeanBandLines,
+  computeStressMarkers,
+  type DrawdownLine,
+  type DrawdownPoint,
+  type MeanBandLine,
+  type MeanBandPoint,
+  type StressMarker,
+} from './risk-lens-engine';
 
 type ThemeTokens = {
   ink: string;
@@ -69,47 +79,11 @@ type PatternFeedItem = PatternSignal & {
   hiddenOnChart: boolean;
 };
 
-type DrawdownPoint = {
-  date: Date;
-  value: number;
-};
-
-type DrawdownLine = {
-  assetId: string;
-  assetName: string;
-  color: string;
-  strokeStyle: 'solid' | 'dashed';
-  points: DrawdownPoint[];
-  maxDrawdown: number | null;
-};
-
 type DrawdownStat = {
   assetId: string;
   assetName: string;
   strokeStyle: 'solid' | 'dashed';
   maxDrawdown: number;
-};
-
-type StressMarker = {
-  assetId: string;
-  assetName: string;
-  color: string;
-  date: Date;
-  value: number;
-  returnRatio: number;
-};
-
-type MeanBandPoint = {
-  date: Date;
-  mean: number | null;
-  upper: number | null;
-  lower: number | null;
-};
-
-type MeanBandLine = {
-  assetId: string;
-  color: string;
-  points: MeanBandPoint[];
 };
 
 type RiskTipCard = {
@@ -282,7 +256,10 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
 
     return lines
       .map((line, lineIndex) => {
-        const drawdown = this.computeDrawdownSeries(line, mode, lineIndex);
+        const drawdown = computeDrawdownSeries(line, mode, {
+          lineIndex,
+          compareEnabled: this.marketService.compareEnabled(),
+        });
         if (drawdown.maxDrawdown == null) return null;
 
         return {
@@ -635,12 +612,22 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const riskLensEnabled = this.riskLensEnabled();
     const showMeanBands = riskLensEnabled && this.showMeanBands();
     const showStressMarkers = riskLensEnabled && this.showStressMarkers();
-    const meanBandLines = showMeanBands ? this.computeMeanBandLines(lines, tokens.riskMean) : [];
+    const meanBandLines = showMeanBands
+      ? computeMeanBandLines(lines, tokens.riskMean, {
+          compareEnabled: this.marketService.compareEnabled(),
+        })
+      : [];
     const drawdownLines = riskLensEnabled
-      ? lines.map((line, lineIndex) => this.computeDrawdownSeries(line, mode, lineIndex, tokens.riskDrawdown))
+      ? lines.map((line, lineIndex) =>
+          computeDrawdownSeries(line, mode, {
+            lineIndex,
+            compareEnabled: this.marketService.compareEnabled(),
+            drawdownColor: tokens.riskDrawdown,
+          })
+        )
       : [];
     const stressMarkers = showStressMarkers
-      ? lines.flatMap((line) => this.computeStressMarkers(line, mode, tokens.riskStress))
+      ? lines.flatMap((line) => computeStressMarkers(line, mode, tokens.riskStress))
       : [];
     const numericValues = this.collectMainChartNumericValues(lines, meanBandLines);
 
@@ -1169,47 +1156,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     return [...pointValues, ...bandValues];
   }
 
-  private computeDrawdownSeries(
-    line: ChartLine,
-    mode: RenderMode,
-    lineIndex = 0,
-    drawdownColor = '#6b5dd3'
-  ): DrawdownLine {
-    const points: DrawdownPoint[] = [];
-    let runningPeak: number | null = null;
-
-    for (const point of line.points) {
-      if (!Number.isFinite(point.value) || point.value == null) {
-        continue;
-      }
-
-      const valueForDrawdown = this.toRiskBaseValue(point.value, mode);
-      if (valueForDrawdown == null) continue;
-
-      if (runningPeak == null || valueForDrawdown > runningPeak) {
-        runningPeak = valueForDrawdown;
-      }
-
-      if (!Number.isFinite(runningPeak) || runningPeak <= 0) continue;
-
-      const drawdown = Math.max(-1, Math.min(0, valueForDrawdown / runningPeak - 1));
-      points.push({ date: point.date, value: drawdown });
-    }
-
-    const maxDrawdown = points.length ? d3.min(points, (point) => point.value) ?? null : null;
-    const strokeStyle: 'solid' | 'dashed' =
-      this.marketService.compareEnabled() && lineIndex > 0 ? 'dashed' : 'solid';
-
-    return {
-      assetId: line.assetId,
-      assetName: line.assetName,
-      color: drawdownColor,
-      strokeStyle,
-      points,
-      maxDrawdown,
-    };
-  }
-
   private findMaxDrawdownPoint(points: DrawdownPoint[]): DrawdownPoint | null {
     if (!points.length) return null;
 
@@ -1217,131 +1163,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       if (!worst) return point;
       return point.value < worst.value ? point : worst;
     }, null);
-  }
-
-  private computeStressMarkers(line: ChartLine, mode: RenderMode, markerColor: string): StressMarker[] {
-    const stressCandidates: Array<{ date: Date; value: number; returnRatio: number }> = [];
-    const negativeReturns: number[] = [];
-
-    for (let i = 1; i < line.points.length; i += 1) {
-      const previous = line.points[i - 1];
-      const current = line.points[i];
-
-      if (previous.value == null || current.value == null) continue;
-      if (!Number.isFinite(previous.value) || !Number.isFinite(current.value)) continue;
-
-      const priorBase = this.toRiskBaseValue(previous.value, mode);
-      const currentBase = this.toRiskBaseValue(current.value, mode);
-      if (priorBase == null || currentBase == null || priorBase === 0) continue;
-
-      const returnRatio = currentBase / priorBase - 1;
-      if (!Number.isFinite(returnRatio)) continue;
-
-      if (returnRatio < 0) {
-        negativeReturns.push(returnRatio);
-        stressCandidates.push({
-          date: current.date,
-          value: current.value,
-          returnRatio,
-        });
-      }
-    }
-
-    if (negativeReturns.length === 0) return [];
-
-    const sortedNegativeReturns = [...negativeReturns].sort((a, b) => a - b);
-    const percentileThreshold =
-      d3.quantileSorted(sortedNegativeReturns, 0.05) ?? this.getStressMinThreshold();
-    const stressThreshold = Math.min(percentileThreshold, this.getStressMinThreshold());
-
-    return stressCandidates
-      .filter((candidate) => candidate.returnRatio <= stressThreshold)
-      .map((candidate) => ({
-        assetId: line.assetId,
-        assetName: line.assetName,
-        color: markerColor,
-        date: candidate.date,
-        value: candidate.value,
-        returnRatio: candidate.returnRatio,
-      }));
-  }
-
-  private computeMeanBandLines(lines: ChartLine[], bandColor: string): MeanBandLine[] {
-    const sourceLines = this.marketService.compareEnabled() ? lines.slice(0, 1) : lines;
-    const windowSize = this.getMeanBandWindow();
-    const stdMultiplier = this.getMeanBandStdMultiplier();
-
-    return sourceLines.map((line) => ({
-      assetId: line.assetId,
-      color: bandColor,
-      points: this.computeMeanBandPoints(line.points, windowSize, stdMultiplier),
-    }));
-  }
-
-  private computeMeanBandPoints(
-    points: Array<{ date: Date; value: number | null }>,
-    windowSize: number,
-    stdMultiplier: number
-  ): MeanBandPoint[] {
-    const bands: MeanBandPoint[] = [];
-
-    for (let i = 0; i < points.length; i += 1) {
-      const point = points[i];
-      if (i < windowSize - 1) {
-        bands.push({ date: point.date, mean: null, upper: null, lower: null });
-        continue;
-      }
-
-      const slice = points.slice(i - windowSize + 1, i + 1);
-      const values = slice.map((p) => p.value);
-
-      if (values.some((value) => value == null || !Number.isFinite(value))) {
-        bands.push({ date: point.date, mean: null, upper: null, lower: null });
-        continue;
-      }
-
-      const numeric = values as number[];
-      const mean = d3.mean(numeric);
-      if (mean == null || !Number.isFinite(mean)) {
-        bands.push({ date: point.date, mean: null, upper: null, lower: null });
-        continue;
-      }
-
-      const variance = d3.mean(numeric, (value) => (value - mean) ** 2) ?? 0;
-      const std = Math.sqrt(Math.max(0, variance));
-
-      bands.push({
-        date: point.date,
-        mean,
-        upper: mean + stdMultiplier * std,
-        lower: mean - stdMultiplier * std,
-      });
-    }
-
-    return bands;
-  }
-
-  private toRiskBaseValue(value: number, mode: RenderMode): number | null {
-    if (!Number.isFinite(value)) return null;
-
-    if (mode === 'price') {
-      return value > 0 ? value : null;
-    }
-
-    const indexValue = 100 + value;
-    return indexValue > 0 ? indexValue : null;
-  }
-
-  private getStressMinThreshold(): number {
-    return -0.03;
-  }
-
-  private getMeanBandWindow(): number {
-    return 30;
-  }
-
-  private getMeanBandStdMultiplier(): number {
-    return 2;
   }
 
   private installHoverBehavior(args: {

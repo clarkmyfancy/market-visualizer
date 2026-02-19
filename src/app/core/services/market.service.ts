@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { ChartLine } from '../../shared/models/chart.model';
 import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.model';
+import { STORAGE_KEYS, StoragePort } from '../ports/storage.port';
 import { CompareSeriesUseCase } from './use-cases/compare-series.use-case';
 import { LoadSeriesUseCase } from './use-cases/load-series.use-case';
 import { RangePolicyService } from './use-cases/range-policy.service';
@@ -12,6 +13,7 @@ export class MarketFacade {
   private readonly compareSeries = inject(CompareSeriesUseCase);
   private readonly loadSeries = inject(LoadSeriesUseCase);
   private readonly rangePolicy = inject(RangePolicyService);
+  private readonly storage = inject(StoragePort);
 
   private readonly availableAssets: MarketAsset[] = [
     { id: 'bitcoin', name: 'Bitcoin', category: 'crypto', color: '#f7931a' },
@@ -435,21 +437,13 @@ export class MarketFacade {
   }
 
   private loadRange(): TimeRange {
-    try {
-      const value = localStorage.getItem('range');
-      const allowed = new Set<TimeRange>(['week', 'month', '3m', '6m', 'year', '2y', '5y', 'max']);
-      return allowed.has(value as TimeRange) ? (value as TimeRange) : 'month';
-    } catch {
-      return 'month';
-    }
+    const value = this.storage.getItem(STORAGE_KEYS.RANGE);
+    const allowed = new Set<TimeRange>(['week', 'month', '3m', '6m', 'year', '2y', '5y', 'max']);
+    return allowed.has(value as TimeRange) ? (value as TimeRange) : 'month';
   }
 
   private saveRange(range: TimeRange): void {
-    try {
-      localStorage.setItem('range', range);
-    } catch {
-      // ignore
-    }
+    this.storage.setItem(STORAGE_KEYS.RANGE, range);
   }
 
   private toCompareError(err: unknown): string {

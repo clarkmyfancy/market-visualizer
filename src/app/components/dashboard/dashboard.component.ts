@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { MarketService } from '../../core/services/market.service';
+import { STORAGE_KEYS, StoragePort } from '../../core/ports/storage.port';
 import { MarketChartComponent } from '../market-chart/market-chart.component';
 import { MarketAsset } from '../../shared/models/market.model';
 
@@ -17,6 +18,7 @@ type ExperimentMode = 'core' | 'signal-lens';
 })
 export class DashboardComponent implements OnInit {
   readonly marketService = inject(MarketService);
+  private readonly storage = inject(StoragePort);
 
   assets: MarketAsset[] = [];
 
@@ -49,37 +51,21 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadTheme(): ThemeMode {
-    try {
-      const v = localStorage.getItem('theme');
-      return v === 'dark' ? 'dark' : 'light';
-    } catch {
-      return 'light';
-    }
+    const value = this.storage.getItem(STORAGE_KEYS.THEME);
+    return value === 'dark' ? 'dark' : 'light';
   }
 
   private saveTheme(mode: ThemeMode): void {
-    try {
-      localStorage.setItem('theme', mode);
-    } catch {
-      // ignore
-    }
+    this.storage.setItem(STORAGE_KEYS.THEME, mode);
   }
 
   private loadExperimentMode(): ExperimentMode {
-    try {
-      const value = localStorage.getItem('experiment-mode');
-      if (value === 'signal-lens' || value === 'experiment-1') return 'signal-lens';
-      return 'core';
-    } catch {
-      return 'core';
-    }
+    const value = this.storage.getItem(STORAGE_KEYS.EXPERIMENT_MODE);
+    if (value === 'signal-lens' || value === 'experiment-1') return 'signal-lens';
+    return 'core';
   }
 
   private saveExperimentMode(mode: ExperimentMode): void {
-    try {
-      localStorage.setItem('experiment-mode', mode);
-    } catch {
-      // ignore
-    }
+    this.storage.setItem(STORAGE_KEYS.EXPERIMENT_MODE, mode);
   }
 }

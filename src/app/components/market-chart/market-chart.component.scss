@@ -16,7 +16,7 @@
   padding: var(--space-3);
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--shadow-ink);
   background: var(--panel);
 }
 
@@ -72,7 +72,7 @@
   margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
   padding: var(--space-2);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 91%, white 9%);
 }
 
@@ -151,7 +151,7 @@
   flex-wrap: wrap;
   padding: calc(var(--space-1) + 1px) var(--space-3);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 88%, white 12%);
   font-size: var(--font-size-chip);
   font-weight: var(--font-weight-black);
@@ -203,7 +203,7 @@
   overflow: hidden;
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: var(--chart-bg);
 }
 
@@ -223,7 +223,7 @@
   padding: var(--space-1) var(--space-2);
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 92%, white 8%);
 
   font-size: var(--font-size-chip);
@@ -308,7 +308,7 @@
   min-width: 15rem;
   padding: var(--space-1);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--panel) 84%, var(--mint) 16%) 0%,
@@ -324,7 +324,7 @@
   text-align: left;
   padding: var(--space-2);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-pressed) var(--shadow-offset-pressed) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-pressed) var(--shadow-offset-pressed) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 90%, white 10%);
   color: var(--text);
   font-size: var(--font-size-chip);
@@ -334,7 +334,7 @@
 
 .risk-help-menu-item:hover {
   transform: translate(-1px, -1px);
-  box-shadow: calc(var(--shadow-offset-pressed) + 1px) calc(var(--shadow-offset-pressed) + 1px) 0 0 var(--ink);
+  box-shadow: calc(var(--shadow-offset-pressed) + 1px) calc(var(--shadow-offset-pressed) + 1px) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 82%, var(--mint) 18%);
 }
 
@@ -383,7 +383,7 @@
 .signals-empty {
   padding: var(--space-2);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 90%, white 10%);
   font-size: var(--font-size-body);
 }
@@ -398,13 +398,13 @@
   gap: var(--space-1);
   padding: var(--space-2);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: color-mix(in srgb, var(--panel) 92%, white 8%);
   cursor: pointer;
 }
 
 .signal-item.active {
-  box-shadow: calc(var(--shadow-offset-sm) + 1px) calc(var(--shadow-offset-sm) + 1px) 0 0 var(--ink);
+  box-shadow: calc(var(--shadow-offset-sm) + 1px) calc(var(--shadow-offset-sm) + 1px) 0 0 var(--shadow-ink);
 }
 
 .signal-item.hidden-on-chart {

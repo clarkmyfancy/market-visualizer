@@ -7,6 +7,7 @@
 
 :root {
   --ink: #1b1b1b;
+  --shadow-ink: var(--ink);
   --paper: #f6f6f6;
   --mint: #b7f0e3;
   --mint-2: #a6e7d7;
@@ -95,7 +96,7 @@
   --control-bg-top: color-mix(in srgb, var(--panel) 85%, var(--mint) 15%);
   --control-bg-bottom: color-mix(in srgb, var(--panel-2) 87%, var(--mint-2) 13%);
   --control-border: var(--ink);
-  --control-shadow: var(--ink);
+  --control-shadow: var(--shadow-ink);
   --control-focus: var(--focus, var(--accent));
   --control-check-size: 1.2rem;
   --control-check-glyph-size: 1.05rem;
@@ -106,12 +107,12 @@
   --modal-panel-top: color-mix(in srgb, var(--panel) 86%, var(--mint) 14%);
   --modal-panel-bottom: color-mix(in srgb, var(--panel-2) 88%, var(--mint-2) 12%);
   --modal-border: var(--ink);
-  --modal-shadow: var(--ink);
+  --modal-shadow: var(--shadow-ink);
 }
 
 .dashboard-container.theme-dark {
-  --paper: #121212;
-  --bg: #121212;
+  --paper: #191b1e;
+  --bg: #191b1e;
   --panel: #1b1b1b;
   --panel-2: #222;
   --inset: #101010;
@@ -125,6 +126,7 @@
   --subtitle-text: rgba(255, 255, 255, 0.7);
 
   --ink: #7a828c;
+  --shadow-ink: #08090a;
   --mint: #2a7f72;
   --mint-2: #226b60;
 
@@ -146,14 +148,14 @@
   --control-bg-top: color-mix(in srgb, var(--panel) 88%, var(--mint) 12%);
   --control-bg-bottom: color-mix(in srgb, var(--panel-2) 84%, var(--mint-2) 16%);
   --control-border: var(--ink);
-  --control-shadow: var(--ink);
+  --control-shadow: var(--shadow-ink);
   --control-check-glyph-color: #ffffff;
 
   --modal-backdrop: color-mix(in srgb, #000 55%, transparent 45%);
   --modal-panel-top: color-mix(in srgb, var(--panel) 84%, var(--mint) 16%);
   --modal-panel-bottom: color-mix(in srgb, var(--panel-2) 82%, var(--mint-2) 18%);
   --modal-border: var(--ink);
-  --modal-shadow: var(--ink);
+  --modal-shadow: var(--shadow-ink);
 }
 
 html,

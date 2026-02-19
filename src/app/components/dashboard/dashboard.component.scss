@@ -11,7 +11,7 @@
   padding: clamp(var(--space-2), 2vw, var(--space-3));
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--shadow-ink);
 
   background: var(--panel);
   container-type: inline-size;
@@ -28,7 +28,7 @@
   background: var(--mint);
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--shadow-ink);
 }
 
 .topbar-left,
@@ -55,7 +55,7 @@
   min-width: 10rem;
   padding: var(--space-1) var(--space-2);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: var(--panel);
   color: var(--text);
   font-weight: var(--font-weight-black);
@@ -73,7 +73,7 @@
 
   background: var(--panel);
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-md) var(--shadow-offset-md) 0 0 var(--shadow-ink);
 
   display: grid;
   gap: var(--space-3);
@@ -85,12 +85,13 @@
 
 .segmented {
   display: flex;
-  gap: 0;
+  gap: var(--space-2);
+  padding: var(--space-1);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
   border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);
   background: var(--inset);
   width: 100%;
 }

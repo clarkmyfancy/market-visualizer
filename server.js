@@ -10,11 +10,14 @@ const DIST_PATH = path.join(__dirname, 'dist/market-visualizer');
 const FRED_GRAPH_CSV_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 const FRED_SERIES_TXT_URL = 'https://fred.stlouisfed.org/data/MEDLISPRI12420.txt';
 const COINGECKO_PUBLIC_BASE_URL = 'https://api.coingecko.com/api/v3';
+const STOOQ_DAILY_BASE_URL = 'https://stooq.com/q/d/l/';
 const COINGECKO_DEMO_API_KEY = process.env.COINGECKO_DEMO_API_KEY?.trim() || '';
 const COINGECKO_DEMO_MAX_DAYS = parsePositiveInt(process.env.COINGECKO_DEMO_MAX_DAYS, 365);
 const COINGECKO_CACHE_TTL_MS = parsePositiveInt(process.env.COINGECKO_CACHE_TTL_MS, 45_000);
 const COINGECKO_STALE_TTL_MS = parsePositiveInt(process.env.COINGECKO_STALE_TTL_MS, 15 * 60_000);
 const coingeckoResponseCache = new Map();
+const STOCK_CACHE_TTL_MS = parsePositiveInt(process.env.STOCK_CACHE_TTL_MS, 10 * 60_000);
+const stockSeriesCache = new Map();
 
 app.use('/api', (req, res, next) => {
   const origin = req.headers.origin ?? '';
@@ -274,6 +277,53 @@ app.get('/api/coingecko/coins/:coinId/market_chart', async (req, res) => {
   }
 });
 
+app.get('/api/stocks/:ticker/history', async (req, res) => {
+  const ticker = String(req.params.ticker || '').trim().toLowerCase();
+  const allowedTickers = new Set(['spy', 'qqq']);
+  if (!allowedTickers.has(ticker)) {
+    res.status(400).json({ error: 'Unsupported stock ticker.' });
+    return;
+  }
+
+  const range = normalizeStockRange(req.query.range);
+  const now = Date.now();
+  const cached = stockSeriesCache.get(ticker);
+
+  if (cached && cached.expiresAt > now) {
+    res.status(200).json({ prices: filterStockPricesByRange(cached.prices, range) });
+    return;
+  }
+
+  try {
+    const upstreamUrl = new URL(STOOQ_DAILY_BASE_URL);
+    upstreamUrl.searchParams.set('s', `${ticker}.us`);
+    upstreamUrl.searchParams.set('i', 'd');
+
+    const upstream = await fetch(upstreamUrl);
+    if (!upstream.ok) {
+      res.status(502).json({ error: `Stock upstream request failed (HTTP ${upstream.status}).` });
+      return;
+    }
+
+    const csvText = await upstream.text();
+    const prices = parseStooqDailyCsv(csvText);
+    if (prices.length === 0) {
+      res.status(502).json({ error: 'Stock upstream returned no usable points.' });
+      return;
+    }
+
+    stockSeriesCache.set(ticker, {
+      prices,
+      expiresAt: now + STOCK_CACHE_TTL_MS,
+    });
+
+    res.status(200).json({ prices: filterStockPricesByRange(prices, range) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    res.status(502).json({ error: `Stock upstream request failed: ${message}` });
+  }
+});
+
 function normalizeCoinGeckoDays(rawDays) {
   const trimmed = String(rawDays || '').trim().toLowerCase();
   if (!trimmed || trimmed === 'max') {
@@ -291,6 +341,77 @@ function normalizeCoinGeckoDays(rawDays) {
 
   return String(parsed);
 }
+
+function normalizeStockRange(rawRange) {
+  const range = String(rawRange || '').trim().toLowerCase();
+  const allowed = new Set(['week', 'month', '3m', '6m', 'year', '2y', '5y', 'max']);
+  if (allowed.has(range)) return range;
+  return 'month';
+}
+
+function mapStockRangeToDays(range) {
+  switch (range) {
+    case 'week':
+      return 7;
+    case 'month':
+      return 30;
+    case '3m':
+      return 90;
+    case '6m':
+      return 180;
+    case 'year':
+      return 365;
+    case '2y':
+      return 365 * 2;
+    case '5y':
+      return 365 * 5;
+    case 'max':
+    default:
+      return Number.MAX_SAFE_INTEGER;
+  }
+}
+
+function filterStockPricesByRange(prices, range) {
+  if (range === 'max' || prices.length === 0) return prices;
+
+  const latestTimestamp = prices[prices.length - 1][0];
+  const cutoff = latestTimestamp - mapStockRangeToDays(range) * 24 * 60 * 60 * 1000;
+  const filtered = prices.filter(([timestamp]) => timestamp >= cutoff);
+  return filtered.length > 0 ? filtered : prices.slice(-1);
+}
+
+function parseStooqDailyCsv(csvText) {
+  const lines = String(csvText || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length <= 1) return [];
+
+  const prices = [];
+  for (let index = 1; index < lines.length; index += 1) {
+    const cols = lines[index].split(',');
+    if (cols.length < 5) continue;
+
+    const dateText = cols[0]?.trim();
+    const closeText = cols[4]?.trim();
+    if (!dateText || !closeText) continue;
+    if (dateText.toLowerCase() === 'date' || closeText.toLowerCase() === 'close') continue;
+    if (closeText.toLowerCase() === 'null' || closeText.toLowerCase() === 'nan') continue;
+
+    const timestamp = Date.parse(`${dateText}T00:00:00Z`);
+    const close = Number(closeText);
+    if (!Number.isFinite(timestamp) || !Number.isFinite(close)) continue;
+
+    prices.push([timestamp, close]);
+  }
+
+  prices.sort((a, b) => a[0] - b[0]);
+  return prices;
+}
+
+app.use('/api/*', (_req, res) => {
+  res.status(404).json({ error: 'API route not found.' });
+});
 
 app.use(express.static(DIST_PATH));
 

@@ -7,6 +7,7 @@ import { MarketService } from './market.service';
 import { SERIES_DATA_PORT_PROVIDERS } from './adapters/series-data.providers';
 import { AustinHousingDataService } from './data/austin-housing-data.service';
 import { CryptoMarketDataService } from './data/crypto-market-data.service';
+import { StockMarketDataService } from './data/stock-market-data.service';
 
 type HousingResult = { points: DataPoint[]; metricLabel: string };
 type Deferred<T> = {
@@ -35,6 +36,16 @@ class MockAustinHousingDataService {
   });
 }
 
+class MockStockMarketDataService {
+  readonly calls: Array<{ ticker: string; range: TimeRange; stream: Subject<DataPoint[]> }> = [];
+
+  readonly loadSeries = jest.fn((ticker: string, range: TimeRange): Observable<DataPoint[]> => {
+    const stream = new Subject<DataPoint[]>();
+    this.calls.push({ ticker, range, stream });
+    return stream.asObservable();
+  });
+}
+
 function createDeferred<T>(): Deferred<T> {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -55,6 +66,7 @@ describe('MarketService', () => {
   let service: MarketService;
   let cryptoData: MockCryptoMarketDataService;
   let housingData: MockAustinHousingDataService;
+  let stockData: MockStockMarketDataService;
 
   beforeEach(() => {
     jest.spyOn(Storage.prototype, 'getItem').mockReturnValue('month');
@@ -62,6 +74,7 @@ describe('MarketService', () => {
 
     cryptoData = new MockCryptoMarketDataService();
     housingData = new MockAustinHousingDataService();
+    stockData = new MockStockMarketDataService();
 
     TestBed.configureTestingModule({
       providers: [
@@ -69,6 +82,7 @@ describe('MarketService', () => {
         ...SERIES_DATA_PORT_PROVIDERS,
         { provide: CryptoMarketDataService, useValue: cryptoData },
         { provide: AustinHousingDataService, useValue: housingData },
+        { provide: StockMarketDataService, useValue: stockData },
       ],
     });
 
@@ -316,6 +330,20 @@ describe('MarketService', () => {
     const maxCallCountAfterBlockedSet = cryptoData.calls.filter((call) => call.range === 'max').length;
     expect(maxCallCountAfterBlockedSet).toBe(maxCallCountBeforeBlockedSet);
   });
+
+  it('loads stock series for stock assets', () => {
+    const spy = getAssetById(service, 'spy');
+
+    service.selectAsset(spy);
+    const monthRequest = getLastStockCall(stockData, 'spy', 'month');
+    monthRequest.stream.next([makePoint(8, 500)]);
+    monthRequest.stream.complete();
+
+    expect(service.isLoading()).toBe(false);
+    expect(service.series().length).toBe(1);
+    expect(service.series()[0].value).toBe(500);
+    expect(service.error()).toBeNull();
+  });
 });
 
 function getAssetById(service: MarketService, assetId: string) {
@@ -335,6 +363,19 @@ function getLastCryptoCall(
   const match = calls[calls.length - 1];
   if (!match) {
     throw new Error(`Expected crypto call for coin "${coinId}" and range "${range}".`);
+  }
+  return match;
+}
+
+function getLastStockCall(
+  stockData: MockStockMarketDataService,
+  ticker: string,
+  range: TimeRange
+) {
+  const calls = stockData.calls.filter((call) => call.ticker === ticker && call.range === range);
+  const match = calls[calls.length - 1];
+  if (!match) {
+    throw new Error(`Expected stock call for ticker "${ticker}" and range "${range}".`);
   }
   return match;
 }

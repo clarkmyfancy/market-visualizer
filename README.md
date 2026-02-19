@@ -1,6 +1,6 @@
 # Market Visualizer
 
-Interactive market dashboard for comparing Bitcoin, Ethereum, Gold, and Austin housing data with configurable time ranges.
+Interactive market dashboard for comparing Bitcoin, Ethereum, Gold, SPY, QQQ, and Austin housing data with configurable time ranges.
 
 ## Live Demo
 - Production: [https://market-visualization-6d9671c91b62.herokuapp.com](https://market-visualization-6d9671c91b62.herokuapp.com)
@@ -13,9 +13,10 @@ Interactive market dashboard for comparing Bitcoin, Ethereum, Gold, and Austin h
 - Jest + `jest-preset-angular`
 
 ## Features
-- Multi-asset selector (BTC, ETH, Gold, Austin Housing)
+- Multi-asset selector (BTC, ETH, Gold, SPY, QQQ, Austin Housing)
 - Time-range controls with asset-aware behavior
 - CoinGecko-backed crypto pricing (including Gold via `tether-gold`)
+- Stooq-backed ETF pricing for SPY and QQQ
 - FRED-backed Austin housing median listing series
 - Unified API routing for local and production environments
 

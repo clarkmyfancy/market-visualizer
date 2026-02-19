@@ -21,6 +21,8 @@ export class MarketFacade {
     { id: 'bitcoin', name: 'Bitcoin', category: 'crypto', color: '#f7931a' },
     { id: 'ethereum', name: 'Ethereum', category: 'crypto', color: '#627eea' },
     { id: 'tether-gold', name: 'Gold', category: 'crypto', color: '#d4af37' },
+    { id: 'spy', name: 'S&P 500 (SPY)', category: 'stock', color: '#0f766e' },
+    { id: 'qqq', name: 'Nasdaq (QQQ)', category: 'stock', color: '#1d4ed8' },
     { id: 'austin-real-estate', name: 'Austin Housing', category: 'real-estate', color: '#22c55e' },
   ];
 
@@ -371,6 +373,28 @@ export class MarketFacade {
       return;
     }
 
+    if (asset.category === 'stock') {
+      this.loadSeries.loadStockSeries(asset.id, effectiveRange).subscribe({
+        next: (points) => {
+          if (!this.isRequestActive(requestToken)) return;
+          this.series.set(points);
+
+          if (points.length > 0) {
+            this.seriesCache.set(cacheKey, points);
+          }
+        },
+        error: (err: unknown) => {
+          if (!this.isRequestActive(requestToken)) return;
+          this.error.set(this.toUserError(err));
+          this.finishRequest(requestToken);
+        },
+        complete: () => {
+          this.finishRequest(requestToken);
+        },
+      });
+      return;
+    }
+
     if (asset.category === 'real-estate' && asset.id === 'austin-real-estate') {
       this.loadSeries.loadHousingSeries(effectiveRange)
         .then((result) => {
@@ -467,6 +491,10 @@ export class MarketFacade {
     const fallback = 'Request failed. Check the Network tab for details.';
 
     if (!(err instanceof HttpErrorResponse)) return fallback;
+
+    if (err.status === 200 && /parsing/i.test(err.message || '') && err.url?.includes('/api/')) {
+      return 'API returned non-JSON data. Restart `npm run dev` so the Node API server picks up latest routes.';
+    }
 
     if (err.status === 0) {
       return 'Network error (status 0). Ensure `npm run dev` is running and /api is proxied.';

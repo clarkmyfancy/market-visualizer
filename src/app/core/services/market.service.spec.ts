@@ -278,7 +278,7 @@ describe('MarketService', () => {
     expect(weekLines[1].points.map((point) => point.value)).toEqual([0]);
   });
 
-  it('hides 2Y/5Y/Max and coerces blocked ranges when compare includes crypto', () => {
+  it('coerces blocked ranges to year for crypto and hides them during crypto compare', () => {
     const bitcoin = getAssetById(service, 'bitcoin');
 
     service.selectAsset(bitcoin);
@@ -298,10 +298,10 @@ describe('MarketService', () => {
     ]);
 
     service.setRange('max');
-    const maxRequest = getLastCryptoCall(cryptoData, 'bitcoin', 'max');
-    maxRequest.stream.next([makePoint(2, 110)]);
-    maxRequest.stream.complete();
-    expect(service.range()).toBe('max');
+    const yearRequestFromCryptoCoercion = getLastCryptoCall(cryptoData, 'bitcoin', 'year');
+    yearRequestFromCryptoCoercion.stream.next([makePoint(2, 110)]);
+    yearRequestFromCryptoCoercion.stream.complete();
+    expect(service.range()).toBe('year');
 
     service.setCompareEnabled(true);
 
@@ -343,6 +343,22 @@ describe('MarketService', () => {
     expect(service.series().length).toBe(1);
     expect(service.series()[0].value).toBe(500);
     expect(service.error()).toBeNull();
+  });
+
+  it('keeps 2Y/5Y/Max ranges available for stock assets', () => {
+    const spy = getAssetById(service, 'spy');
+
+    service.selectAsset(spy);
+    const monthRequest = getLastStockCall(stockData, 'spy', 'month');
+    monthRequest.stream.next([makePoint(8, 500)]);
+    monthRequest.stream.complete();
+
+    service.setRange('max');
+    const maxRequest = getLastStockCall(stockData, 'spy', 'max');
+    maxRequest.stream.next([makePoint(9, 510)]);
+    maxRequest.stream.complete();
+
+    expect(service.range()).toBe('max');
   });
 });
 

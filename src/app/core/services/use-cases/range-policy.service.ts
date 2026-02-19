@@ -15,6 +15,7 @@ export class RangePolicyService {
     { value: 'max', label: 'Max' },
   ];
   private readonly compareCryptoBlockedRanges = new Set<TimeRange>(['2y', '5y', 'max']);
+  private readonly cryptoBlockedRanges = new Set<TimeRange>(['2y', '5y', 'max']);
 
   getRangeOptions(): { value: TimeRange; label: string }[] {
     return this.rangeOptions;
@@ -35,6 +36,10 @@ export class RangePolicyService {
   normalizeRangeForAsset(asset: MarketAsset, range: TimeRange): TimeRange {
     if (asset.id === 'austin-real-estate' && (range === 'week' || range === 'month')) {
       return '3m';
+    }
+
+    if (asset.category === 'crypto' && this.cryptoBlockedRanges.has(range)) {
+      return 'year';
     }
 
     return range;

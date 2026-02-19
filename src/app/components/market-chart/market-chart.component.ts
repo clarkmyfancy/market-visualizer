@@ -342,8 +342,32 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
 
   isRangeDisabled(r: TimeRange): boolean {
     const asset = this.marketService.selectedAsset();
-    if (asset?.id !== 'austin-real-estate') return false;
-    return r === 'week' || r === 'month';
+    if (!asset) return false;
+
+    if (asset.id === 'austin-real-estate') {
+      return r === 'week' || r === 'month';
+    }
+
+    if (asset.category === 'crypto') {
+      return r === '2y' || r === '5y' || r === 'max';
+    }
+
+    return false;
+  }
+
+  rangeDisabledReason(r: TimeRange): string | null {
+    const asset = this.marketService.selectedAsset();
+    if (!asset) return null;
+
+    if (asset.id === 'austin-real-estate' && (r === 'week' || r === 'month')) {
+      return 'Not available for real estate pricing';
+    }
+
+    if (asset.category === 'crypto' && (r === '2y' || r === '5y' || r === 'max')) {
+      return 'Not available for crypto on the current API plan';
+    }
+
+    return null;
   }
 
   headerLabel(): string {

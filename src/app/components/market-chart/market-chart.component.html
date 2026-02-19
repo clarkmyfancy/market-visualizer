@@ -44,11 +44,7 @@
         [style.--accent-color]="marketService.selectedAsset()?.color ?? '#3b82f6'"
         [disabled]="isRangeDisabled(r.value)"
         [attr.aria-disabled]="isRangeDisabled(r.value)"
-        [attr.title]="
-          isRangeDisabled(r.value)
-            ? 'Not available for real estate pricing'
-            : null
-        "
+        [attr.title]="rangeDisabledReason(r.value)"
         [class.active]="marketService.range() === r.value">
         {{ r.label }}
       </button>

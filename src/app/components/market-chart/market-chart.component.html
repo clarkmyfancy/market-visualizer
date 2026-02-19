@@ -153,19 +153,6 @@
     </div>
   }
 
-  @if (riskLensEnabled() && drawdownStats().length > 0) {
-    <div class="drawdown-summary" aria-label="Drawdown summary">
-      <span class="drawdown-summary-label">Max Drawdown:</span>
-      @for (stat of drawdownStats(); track stat.assetId) {
-        <span class="drawdown-stat">
-          <span class="drawdown-swatch" [class.dashed]="stat.strokeStyle === 'dashed'"></span>
-          <span class="drawdown-name">{{ stat.assetName }}</span>
-          <span class="drawdown-value">{{ formatDrawdown(stat.maxDrawdown) }}</span>
-        </span>
-      }
-    </div>
-  }
-
   @if (riskLensEnabled()) {
     <div class="risk-legend" aria-label="Risk lens legend">
       <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('mean')">
@@ -178,7 +165,7 @@
       </span>
       <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('drawdown')">
         <span class="risk-legend-swatch drawdown"></span>
-        <span>Drawdown</span>
+        <span>Drawdown / Drawup</span>
       </span>
     </div>
   }
@@ -195,6 +182,9 @@
               [style.--hover-color]="seriesPoint.color"></span>
             <span class="hover-name">{{ seriesPoint.assetName }}</span>
             <span class="hover-value">{{ formatHoverValue(seriesPoint.value, info.mode) }}</span>
+            @if (riskLensEnabled() && seriesPoint.riskDirection && seriesPoint.riskValue != null) {
+              <span class="hover-risk">{{ formatHoverRisk(seriesPoint.riskDirection, seriesPoint.riskValue) }}</span>
+            }
           </span>
         }
       </div>

@@ -24,7 +24,6 @@ import {
   type PatternSortMode,
   type PatternTypeOption,
 } from './pattern-detector';
-import { computeDrawdownSeries } from './risk-lens-engine';
 import {
   renderMarketChart,
   type HoverInfo,
@@ -38,13 +37,6 @@ type RiskFeatureKey = 'mean' | 'stress' | 'drawdown';
 
 type PatternFeedItem = PatternSignal & {
   hiddenOnChart: boolean;
-};
-
-type DrawdownStat = {
-  assetId: string;
-  assetName: string;
-  strokeStyle: 'solid' | 'dashed';
-  maxDrawdown: number;
 };
 
 type RiskTipCard = {
@@ -150,15 +142,17 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     },
     {
       key: 'drawdown',
-      title: 'Drawdown',
-      summary: 'Percent decline from running peak over time.',
-      whatItIs: 'The percent drop from the most recent peak to the current value over time.',
+      title: 'Drawdown / Drawup',
+      summary: 'Signed percent move versus running peak/trough over time.',
+      whatItIs:
+        'Negative values are drawdown from the running peak, while positive values are drawup from the running trough.',
       bullets: [
-        '0% means the series is at a peak.',
-        'More negative values mean deeper decline from the peak.',
-        '"Max drawdown" in the range is the worst peak-to-trough drop.',
+        'Below 0%: how far the series sits under its running peak.',
+        'Above 0%: how far the series sits above its running trough.',
+        'Use it to compare downside stress and upside recovery in the same range.',
       ],
-      commonMistake: 'Comparing drawdowns across different series without considering volatility and time window.',
+      commonMistake:
+        'Reading a positive value as "risk-free"; drawup can reverse quickly in volatile windows.',
     },
   ];
 
@@ -210,27 +204,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (this.showOnlyStrongestPatternSignals()) return 0;
 
     return this.filteredPatternSignals().length - this.chartAnnotationSignals().length;
-  });
-  readonly drawdownStats = computed<DrawdownStat[]>(() => {
-    const lines = this.chartLines();
-    const mode = this.currentRenderMode();
-
-    return lines
-      .map((line, lineIndex) => {
-        const drawdown = computeDrawdownSeries(line, mode, {
-          lineIndex,
-          compareEnabled: this.marketService.compareEnabled(),
-        });
-        if (drawdown.maxDrawdown == null) return null;
-
-        return {
-          assetId: line.assetId,
-          assetName: line.assetName,
-          strokeStyle: drawdown.strokeStyle,
-          maxDrawdown: drawdown.maxDrawdown,
-        } as DrawdownStat;
-      })
-      .filter((stat): stat is DrawdownStat => stat != null);
   });
   private resizeObserver?: ResizeObserver;
 
@@ -381,6 +354,12 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     return `${this.hoverPctFormatter.format(value)}%`;
   }
 
+  formatHoverRisk(direction: 'drawdown' | 'drawup', value: number): string {
+    if (!Number.isFinite(value)) return '—';
+    const label = direction === 'drawdown' ? 'Drawdown' : 'Drawup';
+    return `${label} ${this.drawdownFormatter.format(value)}`;
+  }
+
   isPatternTypeSelected(type: PatternSignalType): boolean {
     return this.selectedPatternTypes().includes(type);
   }
@@ -440,11 +419,6 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
   formatPatternType(signalType: PatternSignalType): string {
     const option = this.patternTypeOptions.find((entry) => entry.key === signalType);
     return option?.label ?? signalType;
-  }
-
-  formatDrawdown(value: number): string {
-    if (!Number.isFinite(value)) return '—';
-    return this.drawdownFormatter.format(value);
   }
 
   isRiskFeatureVisible(feature: RiskFeatureKey): boolean {

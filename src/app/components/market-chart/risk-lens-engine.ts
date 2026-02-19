@@ -52,6 +52,7 @@ export function computeDrawdownSeries(
   const { lineIndex = 0, compareEnabled = false, drawdownColor = '#6b5dd3' } = options ?? {};
   const points: DrawdownPoint[] = [];
   let runningPeak: number | null = null;
+  let runningTrough: number | null = null;
 
   for (const point of line.points) {
     if (!Number.isFinite(point.value) || point.value == null) {
@@ -64,11 +65,23 @@ export function computeDrawdownSeries(
     if (runningPeak == null || valueForDrawdown > runningPeak) {
       runningPeak = valueForDrawdown;
     }
+    if (runningTrough == null || valueForDrawdown < runningTrough) {
+      runningTrough = valueForDrawdown;
+    }
 
-    if (!Number.isFinite(runningPeak) || runningPeak <= 0) continue;
+    if (
+      !Number.isFinite(runningPeak) ||
+      !Number.isFinite(runningTrough) ||
+      runningPeak <= 0 ||
+      runningTrough <= 0
+    ) {
+      continue;
+    }
 
     const drawdown = Math.max(-1, Math.min(0, valueForDrawdown / runningPeak - 1));
-    points.push({ date: point.date, value: drawdown });
+    const drawup = Math.max(0, valueForDrawdown / runningTrough - 1);
+    const signedRisk = drawdown < -0.0005 ? drawdown : drawup;
+    points.push({ date: point.date, value: signedRisk });
   }
 
   const maxDrawdown = points.length ? d3.min(points, (point) => point.value) ?? null : null;

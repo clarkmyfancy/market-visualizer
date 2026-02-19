@@ -39,6 +39,8 @@ export type HoverSeriesPoint = {
   color: string;
   strokeStyle: 'solid' | 'dashed';
   value: number | null;
+  riskDirection: 'drawdown' | 'drawup' | null;
+  riskValue: number | null;
 };
 
 export type HoverInfo = {
@@ -143,7 +145,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
 
   const innerWidth = Math.max(1, width - margin.left - margin.right);
   const innerHeight = Math.max(1, height - margin.top - margin.bottom);
-  const panelGap = riskLensEnabled ? (isNarrow ? 16 : 18) : 0;
+  const panelGap = riskLensEnabled ? (isNarrow ? 20 : 22) : 0;
 
   let drawdownHeight = 0;
   let mainHeight = innerHeight;
@@ -177,7 +179,14 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     .domain([yMin - pad, yMax + pad])
     .range([mainHeight, 0])
     .nice();
-  const drawdownY = d3.scaleLinear().domain([-1, 0]).range([drawdownHeight, 0]);
+  const [drawdownDomainMin, drawdownDomainMax] = riskLensEnabled
+    ? computeSignedRiskDomain(drawdownLines)
+    : [-1, 0];
+  const drawdownY = d3
+    .scaleLinear()
+    .domain([drawdownDomainMin, drawdownDomainMax])
+    .range([drawdownHeight, 0])
+    .nice();
 
   const xTicks = isNarrow ? 4 : 6;
   const yTicks = isNarrow ? 4 : 5;
@@ -200,6 +209,15 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     .attr('stroke-width', 3);
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+  renderPanelBorders({
+    g,
+    riskLensEnabled,
+    innerWidth,
+    mainHeight,
+    drawdownTop,
+    drawdownHeight,
+    tokens,
+  });
   const mainPlot = g.append('g').attr('class', 'main-plot');
   renderMainGrid(mainPlot, y, yTicks, innerWidth, tokens);
 
@@ -238,7 +256,6 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     g,
     riskLensEnabled,
     innerWidth,
-    panelGap,
     drawdownTop,
     drawdownHeight,
     drawdownY,
@@ -257,6 +274,8 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     hoverHeight,
     lines,
     mode,
+    drawdownLines,
+    riskLensEnabled,
     isNarrow,
     tokens,
     onHoverChange,
@@ -483,7 +502,6 @@ function renderBottomPanel(args: {
   g: d3.Selection<SVGGElement, unknown, null, undefined>;
   riskLensEnabled: boolean;
   innerWidth: number;
-  panelGap: number;
   drawdownTop: number;
   drawdownHeight: number;
   drawdownY: d3.ScaleLinear<number, number>;
@@ -498,7 +516,6 @@ function renderBottomPanel(args: {
     g,
     riskLensEnabled,
     innerWidth,
-    panelGap,
     drawdownTop,
     drawdownHeight,
     drawdownY,
@@ -511,15 +528,6 @@ function renderBottomPanel(args: {
   } = args;
 
   if (riskLensEnabled) {
-    g.append('line')
-      .attr('x1', 0)
-      .attr('x2', innerWidth)
-      .attr('y1', drawdownTop - Math.max(1, panelGap / 2))
-      .attr('y2', drawdownTop - Math.max(1, panelGap / 2))
-      .attr('stroke', tokens.axis)
-      .attr('stroke-width', 1.5)
-      .attr('stroke-opacity', 0.8);
-
     const drawdownPlot = g.append('g').attr('class', 'drawdown-plot').attr('transform', `translate(0,${drawdownTop})`);
 
     drawdownPlot
@@ -612,6 +620,50 @@ function renderBottomPanel(args: {
   }
 }
 
+function renderPanelBorders(args: {
+  g: d3.Selection<SVGGElement, unknown, null, undefined>;
+  riskLensEnabled: boolean;
+  innerWidth: number;
+  mainHeight: number;
+  drawdownTop: number;
+  drawdownHeight: number;
+  tokens: ThemeTokens;
+}): void {
+  const {
+    g,
+    riskLensEnabled,
+    innerWidth,
+    mainHeight,
+    drawdownTop,
+    drawdownHeight,
+    tokens,
+  } = args;
+
+  const strokeInset = 1.25;
+  const strokeWidth = 2.5;
+  const borderWidth = Math.max(0, innerWidth - strokeInset * 2);
+
+  g.append('rect')
+    .attr('x', strokeInset)
+    .attr('y', strokeInset)
+    .attr('width', borderWidth)
+    .attr('height', Math.max(0, mainHeight - strokeInset * 2))
+    .attr('fill', 'none')
+    .attr('stroke', tokens.ink)
+    .attr('stroke-width', strokeWidth);
+
+  if (!riskLensEnabled) return;
+
+  g.append('rect')
+    .attr('x', strokeInset)
+    .attr('y', drawdownTop + strokeInset)
+    .attr('width', borderWidth)
+    .attr('height', Math.max(0, drawdownHeight - strokeInset * 2))
+    .attr('fill', 'none')
+    .attr('stroke', tokens.ink)
+    .attr('stroke-width', strokeWidth);
+}
+
 function getPatternColor(signalType: PatternSignalType, tokens: ThemeTokens): string {
   if (signalType === 'momentum') return tokens.patternMomentum;
   if (signalType === 'meanReversion') return tokens.patternMeanReversion;
@@ -669,11 +721,25 @@ function installHoverBehavior(args: {
   hoverHeight: number;
   lines: ChartLine[];
   mode: RenderMode;
+  drawdownLines: DrawdownLine[];
+  riskLensEnabled: boolean;
   isNarrow: boolean;
   tokens: ThemeTokens;
   onHoverChange: (info: HoverInfo | null) => void;
 }): void {
-  const { g, x, innerWidth, hoverHeight, lines, mode, isNarrow, tokens, onHoverChange } = args;
+  const {
+    g,
+    x,
+    innerWidth,
+    hoverHeight,
+    lines,
+    mode,
+    drawdownLines,
+    riskLensEnabled,
+    isNarrow,
+    tokens,
+    onHoverChange,
+  } = args;
 
   if (isNarrow || !isDesktopHoverCapable()) {
     return;
@@ -691,12 +757,30 @@ function installHoverBehavior(args: {
   if (!allTimestamps.length) return;
 
   const valueByLineAndTimestamp = new Map<string, Map<number, number | null>>();
+  const riskByLineAndTimestamp = new Map<
+    string,
+    Map<number, { direction: 'drawdown' | 'drawup'; value: number }>
+  >();
   for (const line of lines) {
     const byTimestamp = new Map<number, number | null>();
     for (const point of line.points) {
       byTimestamp.set(point.date.getTime(), point.value);
     }
     valueByLineAndTimestamp.set(line.assetId, byTimestamp);
+  }
+
+  if (riskLensEnabled) {
+    for (const drawdownLine of drawdownLines) {
+      const byTimestamp = new Map<number, { direction: 'drawdown' | 'drawup'; value: number }>();
+      for (const point of drawdownLine.points) {
+        if (!Number.isFinite(point.value)) continue;
+        byTimestamp.set(point.date.getTime(), {
+          direction: point.value < -0.0005 ? 'drawdown' : 'drawup',
+          value: point.value,
+        });
+      }
+      riskByLineAndTimestamp.set(drawdownLine.assetId, byTimestamp);
+    }
   }
 
   const hoverLayer = g.append('g').attr('class', 'hover-layer');
@@ -731,6 +815,8 @@ function installHoverBehavior(args: {
       color: line.color,
       strokeStyle: line.strokeStyle,
       value: valueByLineAndTimestamp.get(line.assetId)?.get(timestamp) ?? null,
+      riskDirection: riskByLineAndTimestamp.get(line.assetId)?.get(timestamp)?.direction ?? null,
+      riskValue: riskByLineAndTimestamp.get(line.assetId)?.get(timestamp)?.value ?? null,
     }));
 
     onHoverChange({ date: hoverDate, mode, series });
@@ -751,6 +837,33 @@ function installHoverBehavior(args: {
     hoverRule.style('display', 'none');
     onHoverChange(null);
   });
+}
+
+function computeSignedRiskDomain(drawdownLines: DrawdownLine[]): [number, number] {
+  const values = drawdownLines
+    .flatMap((line) => line.points)
+    .map((point) => point.value)
+    .filter((value): value is number => Number.isFinite(value));
+
+  if (values.length === 0) return [-1, 0];
+
+  let minValue = d3.min(values) ?? -1;
+  let maxValue = d3.max(values) ?? 0;
+  if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) return [-1, 0];
+
+  minValue = Math.min(minValue, 0);
+  maxValue = Math.max(maxValue, 0);
+
+  const span = maxValue - minValue;
+  const pad = span === 0 ? Math.max(0.04, Math.abs(maxValue || minValue) * 0.2) : span * 0.08;
+  const domainMin = minValue - pad;
+  const domainMax = maxValue + pad;
+
+  if (domainMin === domainMax) {
+    return [domainMin - 0.05, domainMax + 0.05];
+  }
+
+  return [domainMin, domainMax];
 }
 
 function isDesktopHoverCapable(): boolean {

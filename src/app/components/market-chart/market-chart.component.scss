@@ -160,57 +160,6 @@
   margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
 }
 
-.drawdown-summary {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-  margin-bottom: calc(var(--space-2) + var(--space-1) / 2);
-  padding: var(--space-1) var(--space-2);
-  border: var(--line-thick) solid var(--ink);
-  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
-  background: color-mix(in srgb, var(--panel) 90%, white 10%);
-}
-
-.drawdown-summary-label {
-  font-weight: var(--font-weight-black);
-  font-size: var(--font-size-chip);
-  color: var(--muted);
-}
-
-.drawdown-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-size-chip);
-  font-weight: var(--font-weight-black);
-}
-
-.drawdown-swatch {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 2px;
-  border: var(--line-thin) solid var(--ink);
-  background: var(--risk-drawdown-color);
-}
-
-.drawdown-swatch.dashed {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      var(--risk-drawdown-color) 0 3px,
-      color-mix(in srgb, var(--risk-drawdown-color) 25%, transparent 75%) 3px 6px
-    );
-}
-
-.drawdown-name {
-  color: var(--muted);
-}
-
-.drawdown-value {
-  white-space: nowrap;
-}
-
 .risk-legend {
   display: inline-flex;
   flex-wrap: wrap;
@@ -341,6 +290,11 @@
 
 .hover-value {
   white-space: nowrap;
+}
+
+.hover-risk {
+  white-space: nowrap;
+  color: var(--muted);
 }
 
 .svg-host {
@@ -689,10 +643,6 @@
   }
 
   .chart-legend {
-    justify-content: center;
-  }
-
-  .drawdown-summary {
     justify-content: center;
   }
 

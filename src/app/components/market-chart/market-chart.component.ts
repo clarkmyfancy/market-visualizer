@@ -112,9 +112,17 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     'pattern',
   ]);
   readonly selectedPatternSignalId = signal<string | null>(null);
-  readonly riskLensEnabled = signal(false);
+  readonly riskLensEnabled = signal(true);
   readonly showMeanBands = signal(true);
   readonly showStressMarkers = signal(true);
+  readonly showDrawdown = signal(true);
+  readonly riskHelpMenuOpen = signal(false);
+  readonly activeRiskTipKey = signal<RiskFeatureKey | null>(null);
+  readonly activeRiskTipCard = computed<RiskTipCard | null>(() => {
+    const key = this.activeRiskTipKey();
+    if (!key) return null;
+    return this.riskTipCards.find((card) => card.key === key) ?? null;
+  });
   readonly riskTipCards: RiskTipCard[] = [
     {
       key: 'mean',
@@ -142,7 +150,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     },
     {
       key: 'drawdown',
-      title: 'Drawdown / Drawup',
+      title: 'Drawdown from high / Drawup from low',
       summary: 'Signed percent move versus running peak/trough over time.',
       whatItIs:
         'Negative values are drawdown from the running peak, while positive values are drawup from the running trough.',
@@ -227,6 +235,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     const lensEnabled = this.riskLensEnabled();
     const meanBands = this.showMeanBands();
     const stressMarkers = this.showStressMarkers();
+    const drawdown = this.showDrawdown();
     void patternsEnabled;
     void selectedTypes;
     void sensitivity;
@@ -236,6 +245,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     void lensEnabled;
     void meanBands;
     void stressMarkers;
+    void drawdown;
 
     this.render(lines, mode);
   }, { allowSignalWrites: true });
@@ -291,16 +301,33 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     this.marketService.setSecondaryAsset(assetId);
   }
 
-  setRiskLensEnabled(enabled: boolean): void {
-    this.riskLensEnabled.set(enabled);
-  }
-
   setMeanBandsEnabled(enabled: boolean): void {
     this.showMeanBands.set(enabled);
   }
 
   setStressMarkersEnabled(enabled: boolean): void {
     this.showStressMarkers.set(enabled);
+  }
+
+  setDrawdownEnabled(enabled: boolean): void {
+    this.showDrawdown.set(enabled);
+  }
+
+  toggleRiskHelpMenu(): void {
+    this.riskHelpMenuOpen.set(!this.riskHelpMenuOpen());
+  }
+
+  closeRiskHelpMenu(): void {
+    this.riskHelpMenuOpen.set(false);
+  }
+
+  openRiskHelpModal(feature: RiskFeatureKey): void {
+    this.activeRiskTipKey.set(feature);
+    this.riskHelpMenuOpen.set(false);
+  }
+
+  closeRiskHelpModal(): void {
+    this.activeRiskTipKey.set(null);
   }
 
   isRangeDisabled(r: TimeRange): boolean {
@@ -425,11 +452,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
     if (!this.riskLensEnabled()) return false;
     if (feature === 'mean') return this.showMeanBands();
     if (feature === 'stress') return this.showStressMarkers();
-    return true;
-  }
-
-  riskFeatureStatusLabel(feature: RiskFeatureKey): string {
-    return this.isRiskFeatureVisible(feature) ? 'Visible' : 'Currently hidden';
+    return this.showDrawdown();
   }
 
   private currentRenderMode(): RenderMode {
@@ -537,6 +560,7 @@ export class MarketChartComponent implements AfterViewInit, OnDestroy {
       riskLensEnabled,
       showMeanBands: riskLensEnabled && this.showMeanBands(),
       showStressMarkers: riskLensEnabled && this.showStressMarkers(),
+      showDrawdown: riskLensEnabled && this.showDrawdown(),
       patternSignals: this.isSignalLensEnabled() ? this.chartAnnotationSignals() : [],
       selectedPatternSignalId: this.selectedPatternSignalId(),
       formatPatternSignalDate: (signal) => this.formatPatternSignalDate(signal),

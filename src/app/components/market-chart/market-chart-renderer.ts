@@ -58,6 +58,7 @@ export type ChartRenderArgs = {
   riskLensEnabled: boolean;
   showMeanBands: boolean;
   showStressMarkers: boolean;
+  showDrawdown: boolean;
   patternSignals: PatternSignal[];
   selectedPatternSignalId: string | null;
   formatPatternSignalDate: (signal: PatternSignal) => string;
@@ -89,6 +90,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     riskLensEnabled,
     showMeanBands,
     showStressMarkers,
+    showDrawdown,
     patternSignals,
     selectedPatternSignalId,
     formatPatternSignalDate,
@@ -111,15 +113,16 @@ export function renderMarketChart(args: ChartRenderArgs): void {
 
   if (validDates.length === 0) return;
 
+  const drawdownPanelEnabled = riskLensEnabled && showDrawdown;
   const meanBandLines = showMeanBands
     ? computeMeanBandLines(lines, tokens.riskMean, { compareEnabled })
     : [];
-  const drawdownLines = riskLensEnabled
+  const drawdownLines = drawdownPanelEnabled
     ? lines.map((line, lineIndex) =>
         computeDrawdownSeries(line, mode, {
           lineIndex,
           compareEnabled,
-          drawdownColor: tokens.riskDrawdown,
+          drawdownColor: line.color,
         })
       )
     : [];
@@ -145,12 +148,12 @@ export function renderMarketChart(args: ChartRenderArgs): void {
 
   const innerWidth = Math.max(1, width - margin.left - margin.right);
   const innerHeight = Math.max(1, height - margin.top - margin.bottom);
-  const panelGap = riskLensEnabled ? (isNarrow ? 20 : 22) : 0;
+  const panelGap = drawdownPanelEnabled ? (isNarrow ? 20 : 22) : 0;
 
   let drawdownHeight = 0;
   let mainHeight = innerHeight;
 
-  if (riskLensEnabled) {
+  if (drawdownPanelEnabled) {
     drawdownHeight = Math.max(56, Math.round(innerHeight * 0.28));
     mainHeight = Math.max(128, innerHeight - drawdownHeight - panelGap);
 
@@ -160,7 +163,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
   }
 
   const drawdownTop = mainHeight + panelGap;
-  const hoverHeight = riskLensEnabled ? Math.max(mainHeight, drawdownTop + drawdownHeight) : mainHeight;
+  const hoverHeight = drawdownPanelEnabled ? Math.max(mainHeight, drawdownTop + drawdownHeight) : mainHeight;
 
   const xExtent = d3.extent(validDates);
   if (!xExtent[0] || !xExtent[1]) return;
@@ -179,7 +182,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     .domain([yMin - pad, yMax + pad])
     .range([mainHeight, 0])
     .nice();
-  const [drawdownDomainMin, drawdownDomainMax] = riskLensEnabled
+  const [drawdownDomainMin, drawdownDomainMax] = drawdownPanelEnabled
     ? computeSignedRiskDomain(drawdownLines)
     : [-1, 0];
   const drawdownY = d3
@@ -211,7 +214,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
   renderPanelBorders({
     g,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     innerWidth,
     mainHeight,
     drawdownTop,
@@ -254,7 +257,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
 
   renderBottomPanel({
     g,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     innerWidth,
     drawdownTop,
     drawdownHeight,
@@ -275,7 +278,7 @@ export function renderMarketChart(args: ChartRenderArgs): void {
     lines,
     mode,
     drawdownLines,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     isNarrow,
     tokens,
     onHoverChange,
@@ -500,7 +503,7 @@ function renderPatternAnnotations(args: {
 
 function renderBottomPanel(args: {
   g: d3.Selection<SVGGElement, unknown, null, undefined>;
-  riskLensEnabled: boolean;
+  drawdownPanelEnabled: boolean;
   innerWidth: number;
   drawdownTop: number;
   drawdownHeight: number;
@@ -514,7 +517,7 @@ function renderBottomPanel(args: {
 }): void {
   const {
     g,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     innerWidth,
     drawdownTop,
     drawdownHeight,
@@ -527,7 +530,7 @@ function renderBottomPanel(args: {
     tokens,
   } = args;
 
-  if (riskLensEnabled) {
+  if (drawdownPanelEnabled) {
     const drawdownPlot = g.append('g').attr('class', 'drawdown-plot').attr('transform', `translate(0,${drawdownTop})`);
 
     drawdownPlot
@@ -622,7 +625,7 @@ function renderBottomPanel(args: {
 
 function renderPanelBorders(args: {
   g: d3.Selection<SVGGElement, unknown, null, undefined>;
-  riskLensEnabled: boolean;
+  drawdownPanelEnabled: boolean;
   innerWidth: number;
   mainHeight: number;
   drawdownTop: number;
@@ -631,7 +634,7 @@ function renderPanelBorders(args: {
 }): void {
   const {
     g,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     innerWidth,
     mainHeight,
     drawdownTop,
@@ -652,7 +655,7 @@ function renderPanelBorders(args: {
     .attr('stroke', tokens.ink)
     .attr('stroke-width', strokeWidth);
 
-  if (!riskLensEnabled) return;
+  if (!drawdownPanelEnabled) return;
 
   g.append('rect')
     .attr('x', strokeInset)
@@ -722,7 +725,7 @@ function installHoverBehavior(args: {
   lines: ChartLine[];
   mode: RenderMode;
   drawdownLines: DrawdownLine[];
-  riskLensEnabled: boolean;
+  drawdownPanelEnabled: boolean;
   isNarrow: boolean;
   tokens: ThemeTokens;
   onHoverChange: (info: HoverInfo | null) => void;
@@ -735,7 +738,7 @@ function installHoverBehavior(args: {
     lines,
     mode,
     drawdownLines,
-    riskLensEnabled,
+    drawdownPanelEnabled,
     isNarrow,
     tokens,
     onHoverChange,
@@ -769,7 +772,7 @@ function installHoverBehavior(args: {
     valueByLineAndTimestamp.set(line.assetId, byTimestamp);
   }
 
-  if (riskLensEnabled) {
+  if (drawdownPanelEnabled) {
     for (const drawdownLine of drawdownLines) {
       const byTimestamp = new Map<number, { direction: 'drawdown' | 'drawup'; value: number }>();
       for (const point of drawdownLine.points) {

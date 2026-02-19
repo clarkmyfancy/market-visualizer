@@ -91,6 +91,21 @@
   --size-range-indicator-height: 3px;
 
   --motion-fast: 120ms;
+
+  --control-bg-top: color-mix(in srgb, var(--panel) 85%, var(--mint) 15%);
+  --control-bg-bottom: color-mix(in srgb, var(--panel-2) 87%, var(--mint-2) 13%);
+  --control-border: var(--ink);
+  --control-shadow: var(--ink);
+  --control-focus: var(--focus, var(--accent));
+  --control-check-size: 1.2rem;
+  --control-check-glyph-size: 1.05rem;
+  --control-select-arrow-size: 0.4rem;
+
+  --modal-backdrop: color-mix(in srgb, var(--ink) 34%, transparent 66%);
+  --modal-panel-top: color-mix(in srgb, var(--panel) 86%, var(--mint) 14%);
+  --modal-panel-bottom: color-mix(in srgb, var(--panel-2) 88%, var(--mint-2) 12%);
+  --modal-border: var(--ink);
+  --modal-shadow: var(--ink);
 }
 
 .dashboard-container.theme-dark {
@@ -126,6 +141,17 @@
   --risk-mean-color: #2ad6bc;
   --risk-stress-color: #ff7a6c;
   --risk-drawdown-color: #a59bff;
+
+  --control-bg-top: color-mix(in srgb, var(--panel) 88%, var(--mint) 12%);
+  --control-bg-bottom: color-mix(in srgb, var(--panel-2) 84%, var(--mint-2) 16%);
+  --control-border: var(--ink);
+  --control-shadow: var(--ink);
+
+  --modal-backdrop: color-mix(in srgb, #000 55%, transparent 45%);
+  --modal-panel-top: color-mix(in srgb, var(--panel) 84%, var(--mint) 16%);
+  --modal-panel-bottom: color-mix(in srgb, var(--panel-2) 82%, var(--mint-2) 18%);
+  --modal-border: var(--ink);
+  --modal-shadow: var(--ink);
 }
 
 html,

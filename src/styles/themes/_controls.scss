@@ -1,0 +1,98 @@
+/* Shared form controls in the blocky paper style */
+
+.paper-select {
+  appearance: none;
+  min-height: 2.4rem;
+  padding: var(--space-2) calc(var(--space-4) + var(--space-2)) var(--space-2) var(--space-2);
+  border: var(--line-thick) solid var(--control-border);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--control-shadow);
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text) 50%),
+    linear-gradient(135deg, var(--text) 50%, transparent 50%),
+    linear-gradient(180deg, var(--control-bg-top) 0%, var(--control-bg-bottom) 100%);
+  background-position:
+    calc(100% - 1.12rem) calc(50% - 1px),
+    calc(100% - 0.72rem) calc(50% - 1px),
+    0 0;
+  background-size:
+    var(--control-select-arrow-size) var(--control-select-arrow-size),
+    var(--control-select-arrow-size) var(--control-select-arrow-size),
+    100% 100%;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+  letter-spacing: var(--letter-spacing-chip);
+}
+
+.paper-select:focus-visible {
+  outline: var(--line-thin) solid var(--control-focus);
+  outline-offset: var(--shadow-offset-sm);
+}
+
+.paper-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.paper-checkbox {
+  --paper-checkbox-accent: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.paper-checkbox-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.paper-checkbox-box {
+  width: var(--control-check-size);
+  height: var(--control-check-size);
+  border: var(--line-thick) solid var(--control-border);
+  box-shadow: var(--shadow-offset-pressed) var(--shadow-offset-pressed) 0 0 var(--control-shadow);
+  background: linear-gradient(180deg, var(--control-bg-top) 0%, var(--control-bg-bottom) 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.paper-checkbox-box::after {
+  content: '✓';
+  font-size: var(--control-check-glyph-size);
+  font-weight: var(--font-weight-black);
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.paper-checkbox-input:checked + .paper-checkbox-box {
+  background: color-mix(in srgb, var(--paper-checkbox-accent) 42%, var(--control-bg-top) 58%);
+}
+
+.paper-checkbox-input:checked + .paper-checkbox-box::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.paper-checkbox-input:focus-visible + .paper-checkbox-box {
+  outline: var(--line-thin) solid var(--control-focus);
+  outline-offset: var(--shadow-offset-sm);
+}
+
+.paper-checkbox-label {
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+}

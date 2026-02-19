@@ -1,0 +1,72 @@
+/* Shared modal styling in blocky paper style */
+
+.paper-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--modal-backdrop);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.paper-modal {
+  width: min(42rem, calc(100vw - var(--space-4) * 2));
+  max-height: min(80vh, 46rem);
+  overflow: auto;
+  border: var(--line-thick) solid var(--modal-border);
+  box-shadow: var(--shadow-offset-lg) var(--shadow-offset-lg) 0 0 var(--modal-shadow);
+  background: linear-gradient(180deg, var(--modal-panel-top) 0%, var(--modal-panel-bottom) 100%);
+  padding: var(--space-3);
+}
+
+.paper-modal-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.paper-modal-title {
+  font-size: calc(var(--font-size-title-sm) + 2px);
+  font-weight: var(--font-weight-black);
+  letter-spacing: var(--letter-spacing-title);
+}
+
+.paper-modal-close {
+  min-width: 5.5rem;
+}
+
+.paper-modal-subtitle {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-strong);
+}
+
+.paper-modal-body {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-body);
+}
+
+.paper-modal-body-label {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+}
+
+.paper-modal-list {
+  margin-top: var(--space-1);
+  padding-left: calc(var(--space-3) + var(--space-1));
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--font-size-body);
+}
+
+.paper-modal-callout {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border: var(--line-thin) solid var(--modal-border);
+  background: color-mix(in srgb, var(--panel) 78%, var(--surface-sunken) 22%);
+  font-size: var(--font-size-body);
+}

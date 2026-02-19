@@ -20,7 +20,7 @@
           <span class="compare-label">Compare with</span>
           <select
             #secondarySelect
-            class="compare-select"
+            class="compare-select paper-select"
             [value]="marketService.secondaryAssetId() ?? ''"
             (change)="setSecondaryAsset(secondarySelect.value)">
             @for (asset of compareAssetOptions(); track asset.id) {
@@ -29,35 +29,6 @@
           </select>
         </label>
 
-      }
-
-      <button
-        type="button"
-        class="range-btn risk-toggle"
-        [class.active]="riskLensEnabled()"
-        [attr.aria-pressed]="riskLensEnabled()"
-        (click)="setRiskLensEnabled(!riskLensEnabled())">
-        Risk Lens: {{ riskLensEnabled() ? 'On' : 'Off' }}
-      </button>
-
-      @if (riskLensEnabled()) {
-        <button
-          type="button"
-          class="range-btn lens-toggle"
-          [class.active]="showMeanBands()"
-          [attr.aria-pressed]="showMeanBands()"
-          (click)="setMeanBandsEnabled(!showMeanBands())">
-          Mean Bands
-        </button>
-
-        <button
-          type="button"
-          class="range-btn lens-toggle"
-          [class.active]="showStressMarkers()"
-          [attr.aria-pressed]="showStressMarkers()"
-          (click)="setStressMarkersEnabled(!showStressMarkers())">
-          Stress Markers
-        </button>
       }
 
     </div>
@@ -107,7 +78,7 @@
           <span class="patterns-label">Sensitivity</span>
           <select
             #sensitivitySelect
-            class="patterns-select"
+            class="patterns-select paper-select"
             [value]="patternSensitivity()"
             (change)="setPatternSensitivity(sensitivitySelect.value)">
             <option value="conservative">Conservative</option>
@@ -120,7 +91,7 @@
           <span class="patterns-label">Sort feed</span>
           <select
             #sortSelect
-            class="patterns-select"
+            class="patterns-select paper-select"
             [value]="patternSortMode()"
             (change)="setPatternSortMode(sortSelect.value)">
             <option value="recency">Most recent</option>
@@ -128,12 +99,14 @@
           </select>
         </label>
 
-        <label class="patterns-check">
+        <label class="patterns-check paper-checkbox">
           <input
+            class="paper-checkbox-input"
             type="checkbox"
             [checked]="showOnlyStrongestPatternSignals()"
             (change)="setShowOnlyStrongestPatternSignals($any($event.target).checked)">
-          <span>Show only strongest signals</span>
+          <span class="paper-checkbox-box" aria-hidden="true"></span>
+          <span class="paper-checkbox-label">Show only strongest signals</span>
         </label>
       </div>
     </div>
@@ -154,19 +127,69 @@
   }
 
   @if (riskLensEnabled()) {
+    @if (riskHelpMenuOpen()) {
+      <button
+        type="button"
+        class="risk-help-menu-dismiss"
+        aria-label="Close Risk Lens help menu"
+        (click)="closeRiskHelpMenu()"></button>
+    }
+
     <div class="risk-legend" aria-label="Risk lens legend">
-      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('mean')">
-        <span class="risk-legend-swatch mean"></span>
-        <span>Mean bands</span>
-      </span>
-      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('stress')">
-        <span class="risk-legend-swatch stress"></span>
-        <span>Stress markers</span>
-      </span>
-      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('drawdown')">
-        <span class="risk-legend-swatch drawdown"></span>
-        <span>Drawdown / Drawup</span>
-      </span>
+      <div class="risk-help-inline">
+        <button
+          type="button"
+          class="range-btn risk-help-btn"
+          [class.active]="riskHelpMenuOpen()"
+          [attr.aria-expanded]="riskHelpMenuOpen()"
+          aria-haspopup="menu"
+          aria-label="Open Risk Lens help topics"
+          (click)="toggleRiskHelpMenu()">
+          ?
+        </button>
+
+        @if (riskHelpMenuOpen()) {
+          <div class="risk-help-menu" role="menu" aria-label="Risk Lens help topics">
+            @for (card of riskTipCards; track card.key) {
+              <button
+                type="button"
+                class="risk-help-menu-item"
+                role="menuitem"
+                (click)="openRiskHelpModal(card.key)">
+                {{ card.title }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <label class="risk-legend-item paper-checkbox mean" [class.is-hidden]="!isRiskFeatureVisible('mean')">
+        <input
+          class="paper-checkbox-input"
+          type="checkbox"
+          [checked]="showMeanBands()"
+          (change)="setMeanBandsEnabled($any($event.target).checked)">
+        <span class="paper-checkbox-box" aria-hidden="true"></span>
+        <span class="paper-checkbox-label">Mean bands</span>
+      </label>
+      <label class="risk-legend-item paper-checkbox stress" [class.is-hidden]="!isRiskFeatureVisible('stress')">
+        <input
+          class="paper-checkbox-input"
+          type="checkbox"
+          [checked]="showStressMarkers()"
+          (change)="setStressMarkersEnabled($any($event.target).checked)">
+        <span class="paper-checkbox-box" aria-hidden="true"></span>
+        <span class="paper-checkbox-label">Stress markers</span>
+      </label>
+      <label class="risk-legend-item paper-checkbox drawdown" [class.is-hidden]="!isRiskFeatureVisible('drawdown')">
+        <input
+          class="paper-checkbox-input"
+          type="checkbox"
+          [checked]="showDrawdown()"
+          (change)="setDrawdownEnabled($any($event.target).checked)">
+        <span class="paper-checkbox-box" aria-hidden="true"></span>
+        <span class="paper-checkbox-label">Drawdown / Drawup</span>
+      </label>
     </div>
   }
 
@@ -199,7 +222,7 @@
       {{ marketService.error() }}
     </div>
 
-    <div #chartContainer class="svg-host" [class.risk-enabled]="riskLensEnabled()"></div>
+    <div #chartContainer class="svg-host" [class.risk-enabled]="riskLensEnabled() && showDrawdown()"></div>
   </div>
 
   @if (isSignalLensEnabled()) {
@@ -274,51 +297,44 @@
     </section>
   }
 
-  @if (riskLensEnabled()) {
-    <section class="risk-tips" aria-label="Risk Lens tips">
-      <h3 class="risk-tips-title">Risk Lens Tips</h3>
+  @if (activeRiskTipCard(); as tip) {
+    <div class="paper-modal-backdrop" (click)="closeRiskHelpModal()">
+      <section
+        class="paper-modal risk-help-modal"
+        [class.feature-mean]="tip.key === 'mean'"
+        [class.feature-stress]="tip.key === 'stress'"
+        [class.feature-drawdown]="tip.key === 'drawdown'"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="tip.title"
+        (click)="$event.stopPropagation()">
+        <header class="paper-modal-header">
+          <h3 class="paper-modal-title">{{ tip.title }}</h3>
+          <button type="button" class="range-btn paper-modal-close" (click)="closeRiskHelpModal()">
+            Close
+          </button>
+        </header>
 
-      @for (card of riskTipCards; track card.key) {
-        <details class="risk-tip-card"
-          [class.feature-mean]="card.key === 'mean'"
-          [class.feature-stress]="card.key === 'stress'"
-          [class.feature-drawdown]="card.key === 'drawdown'"
-          [class.feature-hidden]="!isRiskFeatureVisible(card.key)">
-          <summary class="risk-tip-summary">
-            <span class="tip-heading">
-              <span
-                class="tip-swatch"
-                [class.mean]="card.key === 'mean'"
-                [class.stress]="card.key === 'stress'"
-                [class.drawdown]="card.key === 'drawdown'"></span>
-              <span class="tip-title">{{ card.title }}</span>
-            </span>
-            <span class="tip-summary-text">{{ card.summary }}</span>
-            <span class="tip-status">{{ riskFeatureStatusLabel(card.key) }}</span>
-          </summary>
+        <p class="paper-modal-subtitle">{{ tip.summary }}</p>
+        <p class="paper-modal-body">
+          <strong>What it is:</strong>
+          {{ tip.whatItIs }}
+        </p>
 
-          <div class="risk-tip-content">
-            <p class="tip-what">
-              <strong>What it is:</strong>
-              {{ card.whatItIs }}
-            </p>
+        <p class="paper-modal-body-label">How to read it:</p>
+        <ul class="paper-modal-list">
+          @for (bullet of tip.bullets; track bullet) {
+            <li>{{ bullet }}</li>
+          }
+        </ul>
 
-            <p class="tip-subtitle">How to read it:</p>
-            <ul class="tip-bullets">
-              @for (bullet of card.bullets; track bullet) {
-                <li>{{ bullet }}</li>
-              }
-            </ul>
-
-            @if (card.commonMistake) {
-              <p class="tip-mistake">
-                <strong>Common mistake:</strong>
-                {{ card.commonMistake }}
-              </p>
-            }
-          </div>
-        </details>
-      }
-    </section>
+        @if (tip.commonMistake) {
+          <p class="paper-modal-callout">
+            <strong>Common mistake:</strong>
+            {{ tip.commonMistake }}
+          </p>
+        }
+      </section>
+    </div>
   }
 </div>

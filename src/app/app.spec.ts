@@ -2,12 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
+import { SERIES_DATA_PORT_PROVIDERS } from './core/services/adapters/series-data.providers';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
-      providers: [provideHttpClient()],
+      providers: [provideHttpClient(), ...SERIES_DATA_PORT_PROVIDERS],
     }).compileComponents();
   });
 

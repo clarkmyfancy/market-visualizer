@@ -2,9 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Observable } from 'rxjs';
 
+import {
+  CRYPTO_SERIES_PORT,
+  HOUSING_SERIES_PORT,
+  type CryptoSeriesPort,
+  type HousingSeriesData,
+  type HousingSeriesPort,
+} from '../../ports/series-data.port';
 import { DataPoint, MarketAsset, TimeRange } from '../../../shared/models/market.model';
-import { CryptoSeriesGateway } from '../adapters/crypto-series.gateway';
-import { HousingSeriesGateway } from '../adapters/housing-series.gateway';
 import { RangePolicyService } from './range-policy.service';
 
 export type LoadSeriesResult = {
@@ -14,8 +19,8 @@ export type LoadSeriesResult = {
 
 @Injectable({ providedIn: 'root' })
 export class LoadSeriesUseCase {
-  private readonly cryptoGateway = inject(CryptoSeriesGateway);
-  private readonly housingGateway = inject(HousingSeriesGateway);
+  private readonly cryptoGateway = inject<CryptoSeriesPort>(CRYPTO_SERIES_PORT);
+  private readonly housingGateway = inject<HousingSeriesPort>(HOUSING_SERIES_PORT);
   private readonly rangePolicy = inject(RangePolicyService);
 
   loadCryptoSeries(coinId: string, range: TimeRange): Observable<DataPoint[]> {
@@ -23,7 +28,7 @@ export class LoadSeriesUseCase {
   }
 
   async loadHousingSeries(range: TimeRange): Promise<LoadSeriesResult> {
-    const result = await this.housingGateway.loadSeries(range);
+    const result: HousingSeriesData = await this.housingGateway.loadSeries(range);
     const points = this.rangePolicy.filterSeriesByRange(result.points, range);
     if (points.length === 0) {
       throw new Error('No Austin housing price points found in source data.');

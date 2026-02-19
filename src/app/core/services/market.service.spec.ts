@@ -4,6 +4,7 @@ import { Observable, Subject } from 'rxjs';
 
 import { DataPoint, TimeRange } from '../../shared/models/market.model';
 import { MarketService } from './market.service';
+import { SERIES_DATA_PORT_PROVIDERS } from './adapters/series-data.providers';
 import { AustinHousingDataService } from './data/austin-housing-data.service';
 import { CryptoMarketDataService } from './data/crypto-market-data.service';
 
@@ -65,6 +66,7 @@ describe('MarketService', () => {
     TestBed.configureTestingModule({
       providers: [
         MarketService,
+        ...SERIES_DATA_PORT_PROVIDERS,
         { provide: CryptoMarketDataService, useValue: cryptoData },
         { provide: AustinHousingDataService, useValue: housingData },
       ],

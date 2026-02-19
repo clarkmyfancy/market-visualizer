@@ -1,9 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 
 import { ChartLine } from '../../shared/models/chart.model';
 import { DataPoint, MarketAsset, TimeRange } from '../../shared/models/market.model';
 import { STORAGE_KEYS, StoragePort } from '../ports/storage.port';
+import { MarketStateStore } from './market-state.store';
 import { CompareSeriesUseCase } from './use-cases/compare-series.use-case';
 import { LoadSeriesUseCase } from './use-cases/load-series.use-case';
 import { RangePolicyService } from './use-cases/range-policy.service';
@@ -14,6 +15,7 @@ export class MarketFacade {
   private readonly loadSeries = inject(LoadSeriesUseCase);
   private readonly rangePolicy = inject(RangePolicyService);
   private readonly storage = inject(StoragePort);
+  private readonly state = inject(MarketStateStore);
 
   private readonly availableAssets: MarketAsset[] = [
     { id: 'bitcoin', name: 'Bitcoin', category: 'crypto', color: '#f7931a' },
@@ -22,23 +24,18 @@ export class MarketFacade {
     { id: 'austin-real-estate', name: 'Austin Housing', category: 'real-estate', color: '#22c55e' },
   ];
 
-  readonly selectedAsset = signal<MarketAsset | null>(null);
-  readonly series = signal<DataPoint[]>([]);
-  readonly latestPoint = computed<DataPoint | null>(() => {
-    const points = this.series();
-    return points.length > 0 ? points[points.length - 1] : null;
-  });
+  readonly selectedAsset = this.state.selectedAsset;
+  readonly series = this.state.series;
+  readonly latestPoint = this.state.latestPoint;
+  readonly range = this.state.range;
+  readonly isLoading = this.state.isLoading;
+  readonly error = this.state.error;
+  readonly austinMetricLabel = this.state.austinMetricLabel;
+  readonly compareEnabled = this.state.compareEnabled;
+  readonly secondaryAssetId = this.state.secondaryAssetId;
 
-  readonly range = signal<TimeRange>(this.loadRange());
-  readonly isLoading = signal<boolean>(false);
-  readonly error = signal<string | null>(null);
-  readonly austinMetricLabel = signal<string>('Median Sale Price');
-
-  readonly compareEnabled = signal<boolean>(false);
-  readonly secondaryAssetId = signal<string | null>(null);
-
-  private readonly fullSeriesByAsset = signal<Map<string, DataPoint[]>>(new Map());
-  private readonly fullSeriesLoadingAssets = signal<Set<string>>(new Set());
+  private readonly fullSeriesByAsset = this.state.fullSeriesByAsset;
+  private readonly fullSeriesLoadingAssets = this.state.fullSeriesLoadingAssets;
   private readonly fullSeriesInFlight = new Map<string, Promise<DataPoint[]>>();
 
   readonly isCompareLoading = computed<boolean>(() => {
@@ -97,6 +94,10 @@ export class MarketFacade {
 
   private readonly seriesCache = new Map<string, DataPoint[]>();
   private activeRequestToken = 0;
+
+  constructor() {
+    this.range.set(this.loadRange());
+  }
 
   getAssets(): MarketAsset[] {
     return this.availableAssets;

@@ -10,6 +10,18 @@
     </div>
 
     <div class="topbar-right">
+      <label class="experiment-field">
+        <span class="experiment-label">Experiments</span>
+        <select
+          #experimentSelect
+          class="experiment-select"
+          [value]="experimentMode()"
+          (change)="setExperimentMode(experimentSelect.value)">
+          <option value="core">Core (Default)</option>
+          <option value="signal-lens">Signal Lens</option>
+        </select>
+      </label>
+
       <button
         type="button"
         class="chip chip-ghost"
@@ -39,6 +51,6 @@
   </section>
 
   <section class="content">
-    <app-market-chart></app-market-chart>
+    <app-market-chart [experimentMode]="experimentMode()"></app-market-chart>
   </section>
 </main>

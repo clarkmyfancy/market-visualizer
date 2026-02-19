@@ -5,7 +5,7 @@
       <span class="value">{{ headerValue() }}</span>
     </div>
 
-    <div class="chart-controls" aria-label="Compare controls">
+    <div class="chart-controls" aria-label="Chart controls">
       <button
         type="button"
         class="range-btn compare-toggle"
@@ -30,6 +30,7 @@
         </label>
 
       }
+
     </div>
   </div>
 
@@ -53,6 +54,61 @@
       </button>
     }
   </div>
+
+  @if (isSignalLensEnabled()) {
+    <div class="patterns-controls" aria-label="Pattern detector controls">
+      <div class="patterns-types">
+        <span class="patterns-label">Types</span>
+        <div class="patterns-type-buttons" role="group" aria-label="Pattern type filters">
+          @for (opt of patternTypeOptions; track opt.key) {
+            <button
+              type="button"
+              class="range-btn patterns-type-btn"
+              [class.active]="isPatternTypeSelected(opt.key)"
+              [attr.aria-pressed]="isPatternTypeSelected(opt.key)"
+              (click)="togglePatternType(opt.key)">
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="patterns-options">
+        <label class="patterns-field">
+          <span class="patterns-label">Sensitivity</span>
+          <select
+            #sensitivitySelect
+            class="patterns-select"
+            [value]="patternSensitivity()"
+            (change)="setPatternSensitivity(sensitivitySelect.value)">
+            <option value="conservative">Conservative</option>
+            <option value="normal">Normal</option>
+            <option value="sensitive">Sensitive</option>
+          </select>
+        </label>
+
+        <label class="patterns-field">
+          <span class="patterns-label">Sort feed</span>
+          <select
+            #sortSelect
+            class="patterns-select"
+            [value]="patternSortMode()"
+            (change)="setPatternSortMode(sortSelect.value)">
+            <option value="recency">Most recent</option>
+            <option value="strength">Strongest</option>
+          </select>
+        </label>
+
+        <label class="patterns-check">
+          <input
+            type="checkbox"
+            [checked]="showOnlyStrongestPatternSignals()"
+            (change)="setShowOnlyStrongestPatternSignals($any($event.target).checked)">
+          <span>Show only strongest signals</span>
+        </label>
+      </div>
+    </div>
+  }
 
   @if (marketService.compareEnabled() && chartLines().length === 2) {
     <div class="chart-legend" aria-label="Comparison legend">
@@ -96,4 +152,76 @@
 
     <div #chartContainer class="svg-host"></div>
   </div>
+
+  @if (isSignalLensEnabled()) {
+    <section class="signals-feed" aria-label="Detected pattern signals">
+      <header class="signals-feed-header">
+        <h3 class="signals-feed-title">Signals Feed</h3>
+        @if (hiddenPatternSignalCount() > 0) {
+          <span class="signals-hidden-count">
+            {{ hiddenPatternSignalCount() }} hidden on chart (annotation cap: 10)
+          </span>
+        }
+      </header>
+
+      @if (patternFeedSignals().length === 0) {
+        <p class="signals-empty">
+          No signals matched the current filters and sensitivity in this visible range.
+        </p>
+      } @else {
+        <div class="signals-list">
+          @for (signal of patternFeedSignals(); track signal.id) {
+            <article
+              class="signal-item"
+              [class.active]="selectedPatternSignalId() === signal.id"
+              [class.hidden-on-chart]="signal.hiddenOnChart"
+              [class.type-momentum]="signal.type === 'momentum'"
+              [class.type-mean-reversion]="signal.type === 'meanReversion'"
+              [class.type-volatility]="signal.type === 'volatility'"
+              [class.type-trend]="signal.type === 'trend'"
+              [class.type-pattern]="signal.type === 'pattern'"
+              (click)="focusPatternSignal(signal.id)">
+              <div class="signal-top">
+                <span class="signal-name">{{ signal.name }}</span>
+                <span class="signal-strength">{{ formatPatternSignalStrength(signal) }}</span>
+              </div>
+
+              <div class="signal-meta">
+                <span>{{ formatPatternSignalDate(signal) }}</span>
+                <span>{{ formatPatternDirection(signal) }}</span>
+                <span>{{ formatPatternType(signal.type) }}</span>
+                @if (signal.hiddenOnChart) {
+                  <span class="signal-hidden-tag">Hidden on chart</span>
+                }
+              </div>
+
+              <div class="signal-body">
+                <p class="signal-subtitle">Why this exists</p>
+                <ul class="signal-list">
+                  @for (reason of signal.explanations; track reason) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+
+                <p class="signal-subtitle">How to interpret</p>
+                <ul class="signal-list">
+                  @for (item of signal.interpretation; track item) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                class="range-btn signal-focus-btn"
+                [class.active]="selectedPatternSignalId() === signal.id"
+                (click)="focusPatternSignal(signal.id); $event.stopPropagation()">
+                Highlight on chart
+              </button>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
 </div>

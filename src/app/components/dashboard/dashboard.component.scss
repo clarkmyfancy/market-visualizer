@@ -39,6 +39,34 @@
   min-width: 0;
 }
 
+.experiment-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.experiment-label {
+  font-size: var(--font-size-chip);
+  font-weight: var(--font-weight-black);
+  white-space: nowrap;
+}
+
+.experiment-select {
+  min-width: 10rem;
+  padding: var(--space-1) var(--space-2);
+  border: var(--line-thick) solid var(--ink);
+  box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--ink);
+  background: var(--panel);
+  color: var(--text);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-chip);
+}
+
+.experiment-select:focus-visible {
+  outline: var(--line-thin) solid var(--focus, var(--accent));
+  outline-offset: var(--shadow-offset-sm);
+}
+
 .workbar {
   margin-top: var(--space-3);
   padding: var(--space-3);
@@ -87,6 +115,18 @@
     flex: 0 0 auto;
     margin-left: auto;
     justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .experiment-field {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .experiment-select {
+    min-width: 9rem;
   }
 
   .app-subtitle {

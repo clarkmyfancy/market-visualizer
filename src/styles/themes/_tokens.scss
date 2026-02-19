@@ -32,6 +32,12 @@
   --chart-axis: rgba(0, 0, 0, 0.55);
   --chart-text: rgba(0, 0, 0, 0.92);
   --chart-muted: rgba(0, 0, 0, 0.68);
+  --pattern-momentum-color: #1e63d8;
+  --pattern-mean-reversion-color: #0f8d7a;
+  --pattern-volatility-color: #c86a06;
+  --pattern-trend-color: #8a3fd0;
+  --pattern-pattern-color: #6f6f6f;
+  --pattern-highlight-color: #111111;
 
   --color-danger: #ff0000;
   --surface-sunken: #ededed;
@@ -108,6 +114,12 @@
   --chart-axis: rgba(255, 255, 255, 0.55);
   --chart-text: rgba(255, 255, 255, 0.92);
   --chart-muted: rgba(255, 255, 255, 0.72);
+  --pattern-momentum-color: #69a5ff;
+  --pattern-mean-reversion-color: #2ad6bc;
+  --pattern-volatility-color: #ffb35c;
+  --pattern-trend-color: #c89bff;
+  --pattern-pattern-color: #c0c0c0;
+  --pattern-highlight-color: #ffffff;
 }
 
 html,

@@ -6,6 +6,7 @@ import { MarketChartComponent } from '../market-chart/market-chart.component';
 import { MarketAsset } from '../../shared/models/market.model';
 
 type ThemeMode = 'light' | 'dark';
+type ExperimentMode = 'core' | 'signal-lens';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,6 +22,7 @@ export class DashboardComponent implements OnInit {
 
   readonly theme = signal<ThemeMode>(this.loadTheme());
   readonly themeClass = computed(() => (this.theme() === 'dark' ? 'theme-dark' : 'theme-light'));
+  readonly experimentMode = signal<ExperimentMode>(this.loadExperimentMode());
 
   ngOnInit(): void {
     this.assets = this.marketService.getAssets();
@@ -37,6 +39,15 @@ export class DashboardComponent implements OnInit {
     this.saveTheme(next);
   }
 
+  setExperimentMode(value: string): void {
+    const allowed: ExperimentMode[] = ['core', 'signal-lens'];
+    if (!allowed.includes(value as ExperimentMode)) return;
+
+    const mode = value as ExperimentMode;
+    this.experimentMode.set(mode);
+    this.saveExperimentMode(mode);
+  }
+
   private loadTheme(): ThemeMode {
     try {
       const v = localStorage.getItem('theme');
@@ -49,6 +60,24 @@ export class DashboardComponent implements OnInit {
   private saveTheme(mode: ThemeMode): void {
     try {
       localStorage.setItem('theme', mode);
+    } catch {
+      // ignore
+    }
+  }
+
+  private loadExperimentMode(): ExperimentMode {
+    try {
+      const value = localStorage.getItem('experiment-mode');
+      if (value === 'signal-lens' || value === 'experiment-1') return 'signal-lens';
+      return 'core';
+    } catch {
+      return 'core';
+    }
+  }
+
+  private saveExperimentMode(mode: ExperimentMode): void {
+    try {
+      localStorage.setItem('experiment-mode', mode);
     } catch {
       // ignore
     }

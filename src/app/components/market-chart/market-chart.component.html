@@ -31,6 +31,35 @@
 
       }
 
+      <button
+        type="button"
+        class="range-btn risk-toggle"
+        [class.active]="riskLensEnabled()"
+        [attr.aria-pressed]="riskLensEnabled()"
+        (click)="setRiskLensEnabled(!riskLensEnabled())">
+        Risk Lens: {{ riskLensEnabled() ? 'On' : 'Off' }}
+      </button>
+
+      @if (riskLensEnabled()) {
+        <button
+          type="button"
+          class="range-btn lens-toggle"
+          [class.active]="showMeanBands()"
+          [attr.aria-pressed]="showMeanBands()"
+          (click)="setMeanBandsEnabled(!showMeanBands())">
+          Mean Bands
+        </button>
+
+        <button
+          type="button"
+          class="range-btn lens-toggle"
+          [class.active]="showStressMarkers()"
+          [attr.aria-pressed]="showStressMarkers()"
+          (click)="setStressMarkersEnabled(!showStressMarkers())">
+          Stress Markers
+        </button>
+      }
+
     </div>
   </div>
 
@@ -124,6 +153,36 @@
     </div>
   }
 
+  @if (riskLensEnabled() && drawdownStats().length > 0) {
+    <div class="drawdown-summary" aria-label="Drawdown summary">
+      <span class="drawdown-summary-label">Max Drawdown:</span>
+      @for (stat of drawdownStats(); track stat.assetId) {
+        <span class="drawdown-stat">
+          <span class="drawdown-swatch" [class.dashed]="stat.strokeStyle === 'dashed'"></span>
+          <span class="drawdown-name">{{ stat.assetName }}</span>
+          <span class="drawdown-value">{{ formatDrawdown(stat.maxDrawdown) }}</span>
+        </span>
+      }
+    </div>
+  }
+
+  @if (riskLensEnabled()) {
+    <div class="risk-legend" aria-label="Risk lens legend">
+      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('mean')">
+        <span class="risk-legend-swatch mean"></span>
+        <span>Mean bands</span>
+      </span>
+      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('stress')">
+        <span class="risk-legend-swatch stress"></span>
+        <span>Stress markers</span>
+      </span>
+      <span class="risk-legend-item" [class.is-hidden]="!isRiskFeatureVisible('drawdown')">
+        <span class="risk-legend-swatch drawdown"></span>
+        <span>Drawdown</span>
+      </span>
+    </div>
+  }
+
   <div class="chart-viewport">
     @if (hoverInfo(); as info) {
       <div class="hover-info" aria-live="polite">
@@ -150,7 +209,7 @@
       {{ marketService.error() }}
     </div>
 
-    <div #chartContainer class="svg-host"></div>
+    <div #chartContainer class="svg-host" [class.risk-enabled]="riskLensEnabled()"></div>
   </div>
 
   @if (isSignalLensEnabled()) {
@@ -221,6 +280,54 @@
             </article>
           }
         </div>
+      }
+    </section>
+  }
+
+  @if (riskLensEnabled()) {
+    <section class="risk-tips" aria-label="Risk Lens tips">
+      <h3 class="risk-tips-title">Risk Lens Tips</h3>
+
+      @for (card of riskTipCards; track card.key) {
+        <details class="risk-tip-card"
+          [class.feature-mean]="card.key === 'mean'"
+          [class.feature-stress]="card.key === 'stress'"
+          [class.feature-drawdown]="card.key === 'drawdown'"
+          [class.feature-hidden]="!isRiskFeatureVisible(card.key)">
+          <summary class="risk-tip-summary">
+            <span class="tip-heading">
+              <span
+                class="tip-swatch"
+                [class.mean]="card.key === 'mean'"
+                [class.stress]="card.key === 'stress'"
+                [class.drawdown]="card.key === 'drawdown'"></span>
+              <span class="tip-title">{{ card.title }}</span>
+            </span>
+            <span class="tip-summary-text">{{ card.summary }}</span>
+            <span class="tip-status">{{ riskFeatureStatusLabel(card.key) }}</span>
+          </summary>
+
+          <div class="risk-tip-content">
+            <p class="tip-what">
+              <strong>What it is:</strong>
+              {{ card.whatItIs }}
+            </p>
+
+            <p class="tip-subtitle">How to read it:</p>
+            <ul class="tip-bullets">
+              @for (bullet of card.bullets; track bullet) {
+                <li>{{ bullet }}</li>
+              }
+            </ul>
+
+            @if (card.commonMistake) {
+              <p class="tip-mistake">
+                <strong>Common mistake:</strong>
+                {{ card.commonMistake }}
+              </p>
+            }
+          </div>
+        </details>
       }
     </section>
   }

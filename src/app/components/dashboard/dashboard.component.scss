@@ -68,6 +68,7 @@
 .workbar {
   margin-top: var(--space-3);
   padding: var(--space-3);
+  min-width: 0;
 
   background: var(--panel);
   border: var(--line-thick) solid var(--ink);
@@ -79,6 +80,9 @@
 
 .assetbar {
   display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .segmented {
@@ -86,7 +90,11 @@
   gap: var(--space-2);
   padding: var(--space-1);
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 
   border: var(--line-thick) solid var(--ink);
   box-shadow: var(--shadow-offset-sm) var(--shadow-offset-sm) 0 0 var(--shadow-ink);

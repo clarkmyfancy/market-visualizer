@@ -163,3 +163,31 @@
     background: var(--accent-color);
   }
 }
+
+.dashboard-container.theme-dark {
+  .chip,
+  .range-btn,
+  .chip-ghost {
+    background: color-mix(in srgb, var(--panel) 86%, var(--mint) 14%);
+  }
+
+  .chip::before,
+  .range-btn::before,
+  .chip-ghost::before {
+    display: none;
+  }
+
+  .chip:not(:disabled):hover,
+  .range-btn:not(:disabled):hover {
+    background: color-mix(in srgb, var(--panel) 74%, var(--mint) 26%);
+    filter: none;
+  }
+
+  .range-btn.active {
+    background: color-mix(in srgb, var(--panel) 58%, var(--mint-2) 42%);
+  }
+
+  .chip-ghost {
+    opacity: 1;
+  }
+}

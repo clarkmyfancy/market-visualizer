@@ -314,6 +314,7 @@
     color-mix(in srgb, var(--panel) 84%, var(--mint) 16%) 0%,
     color-mix(in srgb, var(--panel-2) 88%, var(--mint-2) 12%) 100%
   );
+  color: var(--text);
   display: grid;
   gap: var(--space-1);
 }
@@ -325,6 +326,7 @@
   border: var(--line-thick) solid var(--ink);
   box-shadow: var(--shadow-offset-pressed) var(--shadow-offset-pressed) 0 0 var(--ink);
   background: color-mix(in srgb, var(--panel) 90%, white 10%);
+  color: var(--text);
   font-size: var(--font-size-chip);
   font-weight: var(--font-weight-black);
   cursor: pointer;
